@@ -1,25 +1,39 @@
 use std::env;
 use std::process;
 
-use advent2020::ConfigD1;
-use advent2020::run_d1;
+mod day1;
+mod day2;
 
 fn main() {
     match day_arg(env::args()) {
         Some(1) => run1(),
+        Some(2) => run2(),
         Some(x) => { eprintln!("Unimplemented day {}", x); process::exit(1);},
         None => { eprintln!("No valid day on command line {:#?}", env::args()); process::exit(1);},
     }
 }
 
-fn run1() {
-    println!("Day1!");
-    let config = ConfigD1::new(env::args()).unwrap_or_else(|err| {
+fn run2() {
+    println!("Day2");
+    let config = advent2020::Config::new(env::args()).unwrap_or_else(|err| {
         eprintln!("Problem parsing arguments: {}", err);
         process::exit(1);
     });
 
-    if let Err(e) = run_d1(config) {
+    if let Err(e) = day2::run(config) {
+        eprintln!("Error: {}", e);
+        process::exit(1);
+    }
+}
+
+fn run1() {
+    println!("Day1!");
+    let config = advent2020::Config::new(env::args()).unwrap_or_else(|err| {
+        eprintln!("Problem parsing arguments: {}", err);
+        process::exit(1);
+    });
+
+    if let Err(e) = day1::run(config) {
         eprintln!("Error: {}", e);
         process::exit(1);
     }

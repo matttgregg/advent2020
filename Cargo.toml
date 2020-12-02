@@ -3,7 +3,9 @@ name = "advent2020"
 version = "0.1.0"
 authors = ["Matthew Gregg <m.gregg@synthace.com>"]
 edition = "2018"
+default-run = "advent2020"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
