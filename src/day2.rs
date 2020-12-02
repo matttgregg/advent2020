@@ -35,18 +35,15 @@ impl RuledPassword {
     }
 
     pub fn valid2(&self) -> bool {
-        let mut got_min = false;
-        let mut got_max = false;
-        for (i, c) in self.password.char_indices() {
-            if i > self.max + 1 {
-                break;
-            }
-
-            if c == self.letter {
-                if i + 1 == self.min { got_min = true; }
-                if i + 1 == self.max { got_max = true; }
-            }
-        }
+        let chars: Vec<char> = self.password.chars().collect();
+        let got_min = match chars.get(self.min - 1) {
+            Some(x) => self.letter == *x,
+            None => false
+        } ;
+        let got_max = match chars.get(self.max - 1) {
+            Some(x) => self.letter == *x,
+            None => false
+        } ;
 
         !(got_min && got_max) && (got_min || got_max)
     }
@@ -87,7 +84,6 @@ fn line_count(filename: &str) -> usize {
         0
     }
 }
-
 
 #[cfg(test)]
 mod tests {
