@@ -1,13 +1,20 @@
 use std::collections::HashSet;
-use std::error::Error;
-use std::fs;
+use std::time::SystemTime;
 
-pub fn run(config: advent2020::Config) -> Result<(), Box<dyn Error>> {
-    run_file(&config.filename)
+pub fn run() {
+    println!("Day1!");
+    let start = SystemTime::now();
+    let cbytes = include_bytes!("../data/data1.txt");
+    let contents = String::from_utf8_lossy(cbytes);
+
+    run_string(&contents);
+
+
+    let timed = SystemTime::now().duration_since(start).unwrap().as_micros();
+    println!("Timed: {}us", timed);
 }
 
-pub fn run_file(filename: &str) -> Result<(), Box<dyn Error>> {
-    let contents = fs::read_to_string(filename)?;
+pub fn run_string(contents: &str) {
     let contents: HashSet<i32> = contents
         .lines()
         .map(|x| x.parse::<i32>().unwrap_or(0))
@@ -24,8 +31,6 @@ pub fn run_file(filename: &str) -> Result<(), Box<dyn Error>> {
     for (a, b, c) in part2.iter() {
         println!("{} x {} x {} -> {}", a, b, c, a * b * c);
     }
-
-    Ok(())
 }
 
 fn sums_to(vals: &HashSet<i32>, total: i32) -> Vec<(i32, i32)> {
