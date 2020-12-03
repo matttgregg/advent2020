@@ -23,12 +23,12 @@ pub fn run_string(contents: &str) {
 
     // Find sums to 2020
     let part1 = sums_to(&contents, 2020);
-    for (a, b) in part1.iter() {
+    for (a, b) in part1 {
         println!("{} x {} -> {}", a, b, a * b);
     }
 
     let part2 = triple_sums_to(&contents, 2020);
-    for (a, b, c) in part2.iter() {
+    for (a, b, c) in part2 {
         println!("{} x {} x {} -> {}", a, b, c, a * b * c);
     }
 }
@@ -50,9 +50,9 @@ fn triple_sums_to(vals: &HashSet<i32>, total: i32) -> Vec<(i32, i32, i32)> {
         let complement = total - val;
         if val < &complement {
             let complement_sums = sums_to(vals, complement);
-            for (a, b) in complement_sums.iter() {
-                if val < a {
-                    results.push((*val, *a, *b));
+            for (a, b) in complement_sums {
+                if *val < a {
+                    results.push((*val, a, b));
                 }
             }
         }

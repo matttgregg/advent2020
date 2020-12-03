@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic)]
 use std::env;
 use std::process;
 
@@ -32,5 +33,5 @@ fn day_arg(mut args: env::Args) -> Option<i32> {
         return Some(i);
     }
 
-    return None
+    None
 }
