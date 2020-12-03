@@ -1,0 +1,12 @@
+file = { SOI ~ rule ~ (NEWLINE ~ rule)* ~ (NEWLINE)? ~ EOI }
+rule = { range ~ letterChoice ~ pwd }
+
+WHITESPACE = _{ " " }
+
+int = @{ ASCII_DIGIT+ }
+range = { int ~ "-" ~ int }
+
+letter = { ASCII_ALPHA }
+letterChoice = { letter ~ ":" }
+
+pwd = { ASCII_ALPHA+ }
