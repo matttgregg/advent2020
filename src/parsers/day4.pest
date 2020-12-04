@@ -21,7 +21,6 @@ vhair = @{ "#"~ASCII_HEX_DIGIT{6} }
 vecl = @{ "amb" |  "blu" |  "brn" |  "gry" | "grn" | "hzl" | "oth" }
 vpid = @{ ASCII_DIGIT{9} }
 
-
 WHITESPACE = _{ " " }
 NON_WS = @{ !(WHITESPACE | NEWLINE) ~ ANY }
 value = @{ NON_WS+ }

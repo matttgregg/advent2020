@@ -35,3 +35,20 @@ pub fn run_xy_string(contents: &str, x: usize, y: usize) -> Result<usize, Box<dy
 
     Ok(trees)
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn all_test() {
+        let cbytes = include_bytes!("../data/data3.txt");
+        let contents = String::from_utf8_lossy(cbytes);
+        assert_eq!(Some(68), run_xy_string(&contents, 1, 1).ok());
+        assert_eq!(Some(203), run_xy_string(&contents, 3, 1).ok());
+        assert_eq!(Some(78), run_xy_string(&contents, 5, 1).ok());
+        assert_eq!(Some(77), run_xy_string(&contents, 7, 1).ok());
+        assert_eq!(Some(40), run_xy_string(&contents, 1, 2).ok());
+    }
+}

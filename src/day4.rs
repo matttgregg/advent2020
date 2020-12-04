@@ -3,15 +3,6 @@ use pest_derive::Parser;
 
 use std::time::SystemTime;
 
-/// byr (Birth Year)
-/// iyr (Issue Year)
-///    eyr (Expiration Year)
-///    hgt (Height)
-///    hcl (Hair Color)
-///    ecl (Eye Color)
-///    pid (Passport ID)
-///    cid (Country ID)
-
 #[derive(Parser)]
 #[grammar = "parsers/day4.pest"]
 pub struct DParser {}
@@ -22,8 +13,13 @@ pub fn run() {
     let cbytes = include_bytes!("../data/data4.txt");
     let contents = String::from_utf8_lossy(cbytes);
 
-    parse_file(&contents);
+    let (total, valid, valid2) = parse_file(&contents);
     let timed = SystemTime::now().duration_since(start).unwrap().as_micros();
+
+    println!(
+        "Found {}/{} 'valid' passports out of {}.",
+        valid, valid2, total
+    );
     println!("Timed: {}us", timed);
 }
 
@@ -40,7 +36,7 @@ fn is_between(val: &str, min: i32, max: i32) -> usize {
     }
 }
 
-pub fn parse_file(unparsed_file: &str) {
+pub fn parse_file(unparsed_file: &str) -> (i32, i32, i32) {
     let file = DParser::parse(Rule::file, unparsed_file)
         .expect("unsuccessful parse") // unwrap the parse result
         .next()
@@ -83,9 +79,17 @@ pub fn parse_file(unparsed_file: &str) {
             total += 1;
         }
     }
+    (total, valid, valid2)
+}
 
-    println!(
-        "Found {}/{} valid passports out of {}.",
-        valid, valid2, total
-    );
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn all_test() {
+        let cbytes = include_bytes!("../data/data4.txt");
+        let contents = String::from_utf8_lossy(cbytes);
+        assert_eq!((296, 239, 188), parse_file(&contents));
+    }
 }
