@@ -5,12 +5,14 @@ use std::process;
 mod day1;
 mod day2;
 mod day3;
+mod day4;
 
 fn main() {
     match day_arg(env::args()) {
         Some(1) => day1::run(),
         Some(2) => day2::run(),
         Some(3) => day3::run(),
+        Some(4) => day4::run(),
         Some(0) => {
             day1::run();
             day2::run();

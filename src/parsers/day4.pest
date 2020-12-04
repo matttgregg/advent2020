@@ -1,0 +1,27 @@
+file = { SOI ~ passport ~ (NEWLINE+ ~ passport)* ~ NEWLINE? ~ EOI }
+passport = { field ~ (NEWLINE? ~ field)* }
+
+field = _{ birth | issue | expire | height | hair | eyes | pid | cid }
+
+birth = ${"byr:" ~ vbirth? ~ value? }
+issue = ${"iyr:" ~ vissue? ~ value? }
+expire = ${"eyr:" ~ vexpire? ~ value? }
+height = ${"hgt:" ~ ((cmheight ~ "cm") | (inheight ~ "in"))? ~ value? }
+hair = ${"hcl:" ~ vhair? ~ value? }
+eyes = ${"ecl:" ~ vecl? ~ value? }
+pid = ${"pid:" ~ (vpid | value) ~ value? }
+cid = ${"cid:" ~ value }
+
+vbirth = @{ ASCII_DIGIT{4} }
+vissue = @{ ASCII_DIGIT{4} }
+vexpire = @{ ASCII_DIGIT{4} }
+cmheight = @{ ASCII_DIGIT{3} }
+inheight = @{ ASCII_DIGIT{2} }
+vhair = @{ "#"~ASCII_HEX_DIGIT{6} }
+vecl = @{ "amb" |  "blu" |  "brn" |  "gry" | "grn" | "hzl" | "oth" }
+vpid = @{ ASCII_DIGIT{9} }
+
+
+WHITESPACE = _{ " " }
+NON_WS = @{ !(WHITESPACE | NEWLINE) ~ ANY }
+value = @{ NON_WS+ }

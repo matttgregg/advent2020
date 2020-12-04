@@ -4,7 +4,7 @@ use std::string::String;
 use std::time::SystemTime;
 
 #[derive(Parser)]
-#[grammar = "day2.pest"]
+#[grammar = "parsers/day2.pest"]
 pub struct DParser {}
 
 #[derive(Debug)]
