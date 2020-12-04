@@ -27,12 +27,16 @@ pub fn run() {
     println!("Timed: {}us", timed);
 }
 
-fn is_between(val: &str, min: i32, max: i32) -> bool {
+fn is_between(val: &str, min: i32, max: i32) -> usize {
     let parsed = val.parse::<i32>();
     if let Ok(v) = parsed {
-        v >= min && v <= max
+        if v >= min && v <= max {
+            1
+        } else {
+            0
+        }
     } else {
-        false
+        0
     }
 }
 
@@ -49,67 +53,22 @@ pub fn parse_file(unparsed_file: &str) {
         let mut fcount = 0;
         let mut fcount2 = 0;
         for f in line.into_inner() {
-            fcount += 1;
-            let rule = f.as_rule();
-            let mut parts = f.into_inner();
-            let try_part = parts.next();
-            match rule {
-                Rule::birth => {
-                    if let Some(part) = try_part {
-                        if part.as_rule() == Rule::vbirth && parts.next() == None && is_between(part.as_str(), 1920, 2002) {
-                            fcount2 += 1;
+            if f.as_rule() != Rule::cid {
+                fcount += 1;
+                let mut parts = f.into_inner();
+                let try_part = parts.next();
+                if let Some(part) = try_part {
+                    if parts.next() == None {
+                        fcount2 += match part.as_rule() {
+                            Rule::vbirth => is_between(part.as_str(), 1920, 2002),
+                            Rule::vissue => is_between(part.as_str(), 2010, 2020),
+                            Rule::vexpire => is_between(part.as_str(), 2020, 2030),
+                            Rule::cmheight => is_between(part.as_str(), 150, 193),
+                            Rule::inheight => is_between(part.as_str(), 59, 76),
+                            Rule::vhair | Rule::vecl | Rule::vpid => 1,
+                            _ => 0,
                         }
                     }
-                },
-                Rule::issue => {
-                    if let Some(part) = try_part {
-                        if part.as_rule() == Rule::vissue && parts.next() == None && is_between(part.as_str(), 2010, 2020) {
-                            fcount2 += 1;
-                        }
-                    }
-                },
-                Rule::expire => {
-                    if let Some(part) = try_part {
-                        if part.as_rule() == Rule::vexpire && parts.next() == None && is_between(part.as_str(), 2020, 2030) {
-                            fcount2 += 1;
-                        }
-                    }
-                },
-                Rule::height => {
-                    if let Some(part) = try_part {
-                        if ((part.as_rule() == Rule::cmheight && is_between(part.as_str(), 150, 193)) ||
-                           (part.as_rule() == Rule::inheight && is_between(part.as_str(), 59, 76))) && parts.next() == None {
-                                fcount2 += 1;
-                        }
-                    }
-                },
-                Rule::hair => {
-                    if let Some(part) = try_part {
-                        if part.as_rule() == Rule::vhair && parts.next() == None {
-                            fcount2 += 1;
-                        }
-                    }
-                },
-                Rule::eyes => {
-                    if let Some(part) = try_part {
-                        if part.as_rule() == Rule::vecl && parts.next() == None {
-                            fcount2 += 1;
-                        }
-                    }
-                },
-                Rule::pid => {
-                    if let Some(part) = try_part {
-                        if part.as_rule() == Rule::vpid && parts.next() == None {
-                            fcount2 += 1;
-                        }
-                    }
-                },
-                Rule::cid => {
-                    fcount -= 1;
-                }
-                _ => {
-                    fcount += 1;
-                    fcount2 += 1;
                 }
             }
         }

@@ -17,6 +17,7 @@ fn main() {
             day1::run();
             day2::run();
             day3::run();
+            day4::run();
         }
         Some(x) => { eprintln!("Unimplemented day {}", x); process::exit(1);},
         None => { eprintln!("No valid day on command line {:#?}", env::args()); process::exit(1);},
