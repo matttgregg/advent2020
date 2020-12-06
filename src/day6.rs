@@ -1,17 +1,20 @@
 use std::time::SystemTime;
+use advent2020::{print_day, print_duration, fmt_bright};
 
 pub fn run() {
-    println!("Day6!");
+    print_day(6);
+    
     let start = SystemTime::now();
     let cbytes = include_bytes!("../data/data6.txt");
     let contents = String::from_utf8_lossy(cbytes);
 
     let (any, all) = run_groups_all(&contents);
-    let timed = SystemTime::now().duration_since(start).unwrap().as_micros();
+    let timed = SystemTime::now().duration_since(start).unwrap();
 
-    println!("Groups sum (ANY): {}", any);
-    println!("Groups sum (ALL): {}", all);
-    println!("Timed: {}us", timed);
+    println!("Groups sum (ANY): {}", fmt_bright(&any));
+    println!("Groups sum (ALL): {}", fmt_bright(&all));
+
+    print_duration(timed);
 }
 
 pub fn run_groups_all(data: &str) -> (u32, u32) {

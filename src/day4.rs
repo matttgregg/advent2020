@@ -2,25 +2,26 @@ use pest::Parser;
 use pest_derive::Parser;
 
 use std::time::SystemTime;
+use advent2020::{print_day, print_duration, fmt_bright};
 
 #[derive(Parser)]
 #[grammar = "parsers/day4.pest"]
 pub struct DParser {}
 
 pub fn run() {
-    println!("Day4!");
+    print_day(4);
     let start = SystemTime::now();
     let cbytes = include_bytes!("../data/data4.txt");
     let contents = String::from_utf8_lossy(cbytes);
 
     let (total, valid, valid2) = parse_file(&contents);
-    let timed = SystemTime::now().duration_since(start).unwrap().as_micros();
+    let timed = SystemTime::now().duration_since(start).unwrap();
 
     println!(
         "Found {}/{} 'valid' passports out of {}.",
-        valid, valid2, total
+        fmt_bright(&valid), fmt_bright(&valid2), total
     );
-    println!("Timed: {}us", timed);
+    print_duration(timed);
 }
 
 fn is_between(val: &str, min: i32, max: i32) -> usize {

@@ -3,6 +3,8 @@ use pest::Parser;
 use std::string::String;
 use std::time::SystemTime;
 
+use advent2020::{print_day, print_duration, fmt_bright};
+
 #[derive(Parser)]
 #[grammar = "parsers/day2.pest"]
 pub struct DParser {}
@@ -38,15 +40,17 @@ impl RuledPassword {
 }
 
 pub fn run() {
-    println!("Day2!");
+    print_day(2);
+    
     let start = SystemTime::now();
     let cbytes = include_bytes!("../data/data2.txt");
     let contents = String::from_utf8_lossy(cbytes);
 
     let (count, valid, valid2) = parse_file(&contents);
-    println!("Total:{} Valid1:{} Valid2:{}", count, valid, valid2);
-    let timed = SystemTime::now().duration_since(start).unwrap().as_micros();
-    println!("Timed: {}us", timed);
+    
+    let timed = SystemTime::now().duration_since(start).unwrap();
+    println!("Total:{} Valid1:{} Valid2:{}", count, fmt_bright(&valid), fmt_bright(&valid2));
+    print_duration(timed);
 
 }
 

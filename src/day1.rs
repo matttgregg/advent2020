@@ -1,17 +1,18 @@
 use std::collections::HashSet;
 use std::time::SystemTime;
 
+use advent2020::{print_day, print_duration, fmt_bright};
+
 pub fn run() {
-    println!("Day1!");
+    print_day(1);
     let start = SystemTime::now();
     let cbytes = include_bytes!("../data/data1.txt");
     let contents = String::from_utf8_lossy(cbytes);
 
     run_string(&contents);
 
-
-    let timed = SystemTime::now().duration_since(start).unwrap().as_micros();
-    println!("Timed: {}us", timed);
+    let timed = SystemTime::now().duration_since(start).unwrap();
+    print_duration(timed);
 }
 
 pub fn run_string(contents: &str) {
@@ -24,12 +25,12 @@ pub fn run_string(contents: &str) {
     // Find sums to 2020
     let part1 = sums_to(&contents, 2020);
     for (a, b) in part1 {
-        println!("{} x {} -> {}", a, b, a * b);
+        println!("{} x {} -> {}", a, b, fmt_bright(&(a * b)));
     }
 
     let part2 = triple_sums_to(&contents, 2020);
     for (a, b, c) in part2 {
-        println!("{} x {} x {} -> {}", a, b, c, a * b * c);
+        println!("{} x {} x {} -> {}", a, b, c, fmt_bright(&(a * b * c)));
     }
 }
 

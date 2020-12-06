@@ -1,9 +1,11 @@
 use std::time::SystemTime;
+use advent2020::{print_day, print_duration, fmt_bright};
 
 use std::collections::HashSet;
 
 pub fn run() {
-    println!("Day5!");
+    print_day(5);
+    
     let start = SystemTime::now();
     let cbytes = include_bytes!("../data/data5.txt");
     let contents = String::from_utf8_lossy(cbytes);
@@ -12,11 +14,11 @@ pub fn run() {
     let (row, col, best) = find_max_seats(&contents);
     let my_seat = find_missing_seat(&contents);
 
-    let timed = SystemTime::now().duration_since(start).unwrap().as_micros();
+    let timed = SystemTime::now().duration_since(start).unwrap();
 
-    println!("Highest index at {}, {} => {}", row, col, best);
-    println!("My seat at {}", my_seat);
-    println!("Timed: {}us", timed);
+    println!("Highest index at {}, {} => {}", row, col, fmt_bright(&best));
+    println!("My seat at {}", fmt_bright(&my_seat));
+    print_duration(timed);
 }
 
 fn find_missing_seat(seats: &str) -> i64 {

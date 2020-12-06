@@ -11,4 +11,5 @@ default-run = "advent2020"
 regex = "1"
 pest = "2.0"
 pest_derive = "2.0"
+termion = "1.5"
 

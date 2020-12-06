@@ -2,8 +2,10 @@ use std::error::Error;
 use std::iter::Iterator;
 use std::time::SystemTime;
 
+use advent2020::{print_day, print_duration, fmt_bright};
+
 pub fn run() {
-    println!("Day3!");
+    print_day(3);
     let start = SystemTime::now();
     let cbytes = include_bytes!("../data/data3.txt");
     let contents = String::from_utf8_lossy(cbytes);
@@ -12,11 +14,15 @@ pub fn run() {
     let mut runs: Vec<usize> = Vec::new();
 
     for (x, y) in trajs {
-        runs.push(run_xy_string(&contents, x, y).unwrap_or(0));
+        let res = run_xy_string(&contents, x, y).unwrap_or(0);
+        if (x, y) == (3, 1) {
+            println!("  --> (my first try) {}", fmt_bright(&res));
+        }
+        runs.push(res);
     }
-    let timed = SystemTime::now().duration_since(start).unwrap().as_micros();
-    println!("Grand product {}", runs.iter().product::<usize>());
-    println!("Timed: {}us", timed);
+    let timed = SystemTime::now().duration_since(start).unwrap();
+    println!("Grand product {}", fmt_bright(&runs.iter().product::<usize>()));
+    print_duration(timed);
 }
 
 pub fn run_xy_string(contents: &str, x: usize, y: usize) -> Result<usize, Box<dyn Error>> {
