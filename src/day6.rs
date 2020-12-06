@@ -1,70 +1,43 @@
 use std::time::SystemTime;
 
-use std::collections::HashSet;
-
 pub fn run() {
-    println!("Day5!");
+    println!("Day6!");
     let start = SystemTime::now();
     let cbytes = include_bytes!("../data/data6.txt");
     let contents = String::from_utf8_lossy(cbytes);
 
-    let res = run_groups_any(&contents);
-    let res2 = run_groups_all(&contents);
+    let (any, all) = run_groups_all(&contents);
     let timed = SystemTime::now().duration_since(start).unwrap().as_micros();
 
-    println!("Groups sum (ANY): {}", res);
-    println!("Groups sum (ALL): {}", res2);
+    println!("Groups sum (ANY): {}", any);
+    println!("Groups sum (ALL): {}", all);
     println!("Timed: {}us", timed);
 }
 
-pub fn run_groups_any(data: &str) -> usize  {
-    let mut group_data = HashSet::new();
-    let mut groups_sum = 0;
+pub fn run_groups_all(data: &str) -> (u32, u32) {
+    let mut groups_sum_all = 0;
+    let mut groups_sum_any = 0;
+    let mut filter_all = u32::MAX;
+    let mut filter_any = 0_u32;
     for line in data.lines() {
-        let mut char_count = 0;
+        let mut ans_bin = 0_u32;
         for c in line.chars() {
-            char_count += 1;
-            group_data.insert(c);
-        }
-        if char_count == 0 {
-            groups_sum += group_data.len();
-            group_data.clear();
-        }
-    }
-
-    // Collect final values.
-    groups_sum += group_data.len();
-    group_data.clear();
-    groups_sum
-}
-
-pub fn run_groups_all(data: &str) -> usize  {
-    let mut group_data = HashSet::new();
-    let mut groups_sum = 0;
-    let mut group_i = 0;
-    for line in data.lines() {
-        let mut char_count = 0;
-        let mut new_group_data = HashSet::new();
-        for c in line.chars() {
-            char_count += 1;
-            if group_i == 0 || group_data.contains(&c) {
-                // We only collect chars collected by the previous passenger.
-                new_group_data.insert(c);
-            }
+            ans_bin |= 2_u32.pow(u32::from(c) - u32::from('a'));
         }
 
-        if char_count == 0 {
-            groups_sum += group_data.len();
-            group_data.clear();
-            group_i = 0;
+        if ans_bin == 0 {
+            groups_sum_all += filter_all.count_ones();
+            groups_sum_any += filter_any.count_ones();
+            filter_any = 0;
+            filter_all = u32::MAX;
         } else {
-            group_data = new_group_data;
-            group_i += 1;
+            filter_any |= ans_bin;
+            filter_all &= ans_bin;
         }
     }
 
     // Collect final values.
-    groups_sum += group_data.len();
-    group_data.clear();
-    groups_sum
+    groups_sum_all += filter_all.count_ones();
+    groups_sum_any += filter_any.count_ones();
+    (groups_sum_any, groups_sum_all)
 }
