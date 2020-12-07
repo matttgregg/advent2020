@@ -6,10 +6,12 @@ pub fn run() {
     print_day();
 
     let start = SystemTime::now();
+    /*
     let cbytes = include_bytes!("../data/data<DAY>.txt");
     let contents = String::from_utf8_lossy(cbytes);
+    */
 
-    let timed = SystemTime::now().duration_since(start).unwrap().as_micros();
+    let timed = SystemTime::now().duration_since(start).unwrap();
 
     print_duration(timed);
 }

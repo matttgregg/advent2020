@@ -22,13 +22,12 @@ impl Config {
 }
 
 pub fn print_day(d: i32) {
-    println!("{}Day {} !{:50}{}", color::Bg(color::Blue), d, "", color::Bg(color::Reset));
+    println!(" \u{1F389} {}Day {} !{}", style::Underline, d, style::Reset);
 }
 
 pub fn print_duration(d: time::Duration) {
-    println!("{}", style::Invert);
-    println!("Timed: {}us", d.as_micros());
-    println!("{}", style::Reset);
+    println!(" \u{1F44D} {}Timed: {}us {}", style::Invert, d.as_micros(), style::Reset);
+    println!{}; 
 }
 
 pub fn fmt_bright<T: std::fmt::Display>(t: &T) -> String {

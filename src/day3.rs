@@ -37,7 +37,7 @@ pub fn run_xy_string(contents: &str, x: usize, y: usize) -> Result<usize, Box<dy
         }
     }
 
-    println!("Going {}, {}, hit {} trees :(", x, y, trees);
+    println!("Going {}, {}, hit {} trees \u{1F61E}", x, y, trees);
 
     Ok(trees)
 }

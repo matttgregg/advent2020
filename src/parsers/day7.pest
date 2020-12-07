@@ -1,0 +1,8 @@
+file = { SOI ~ bagrule+ ~ NEWLINE? ~ EOI }
+
+bagrule = { bag ~ " bags contain " ~ (nobag | (somebags ~ (", " ~ somebags)*)) ~ (".") ~ NEWLINE* } 
+
+bag = { ASCII_ALPHA+ ~ " " ~ ASCII_ALPHA+  }
+nobag = _{ "no other bags" }
+count = { ASCII_DIGIT+ }
+somebags = { count ~ " " ~ bag ~ " bag" ~ "s"*  }
