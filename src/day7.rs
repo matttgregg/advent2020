@@ -6,24 +6,32 @@ use std::time::SystemTime;
 
 use advent2020::{fmt_bright, print_day, print_duration};
 
+fn data() -> String {
+    let cbytes = include_bytes!("../data/data7.txt");
+    String::from_utf8_lossy(cbytes).to_string()
+}
+
 pub fn run() {
     print_day(7);
 
     let start = SystemTime::now();
-    let cbytes = include_bytes!("../data/data7.txt");
-    let contents = String::from_utf8_lossy(cbytes);
 
-    let (contains_gold, in_gold) = parse_bags(&contents);
+    let (contains_gold, in_gold) = parse_bags(&data(), "shiny gold");
 
     let timed = SystemTime::now().duration_since(start).unwrap();
-    println!("{} bag types contain shiny gold bags.", fmt_bright(&contains_gold));
-    println!("Each gold shiny bag contains {} bags in total.", fmt_bright(&in_gold));
+    println!(
+        "{} bag types contain shiny gold bags.",
+        fmt_bright(&contains_gold)
+    );
+    println!(
+        "Each gold shiny bag contains {} bags in total.",
+        fmt_bright(&in_gold)
+    );
 
     print_duration(timed);
 }
 
-pub fn parse_bags(data: &str) -> (usize, usize) {
-    let mut bag_contains: HashMap<&str, Vec<&str>> = HashMap::new();
+pub fn parse_bags(data: &str, my_bag_type: &str) -> (usize, usize) {
     let mut contains_gold = HashSet::new();
 
     let mut contains: HashMap<&str, Vec<(&str, usize)>> = HashMap::new();
@@ -48,30 +56,32 @@ pub fn parse_bags(data: &str) -> (usize, usize) {
                 let bag_bit = bits.next();
                 let count = bag_bit.unwrap().as_str().parse::<usize>().unwrap();
                 let what = bits.next().unwrap().as_str();
-                if what == "shiny gold" {
+                if what == my_bag_type {
                     contains_gold.insert(bag_name);
                 }
 
                 if contains_gold.contains(what) {
                     contains_gold.insert(bag_name);
                 }
-                bag_contains.entry(bag_name).or_insert(vec![]).push(what);
-                contains.entry(bag_name).or_insert(vec![]).push((what, count));
+                contains
+                    .entry(bag_name)
+                    .or_insert(vec![])
+                    .push((what, count));
             }
         }
     }
 
     let mut no_gold = HashSet::new();
 
-    for (bag, contents) in &bag_contains {
+    for (bag, contents) in &contains {
         let mut working = vec![];
-        for inner in contents {
+        for (inner, _) in contents {
             working.push(inner.to_owned());
         }
 
         while !working.is_empty() {
             let check = working.pop();
-            if check == Some("shiny gold") {
+            if check == Some(my_bag_type) {
                 // We've hit gold! Note and continue.
                 contains_gold.insert(bag);
                 break;
@@ -85,8 +95,8 @@ pub fn parse_bags(data: &str) -> (usize, usize) {
                 }
 
                 // We don't have to bother checking if we've already checked this bag has no gold.
-                if bag_contains.contains_key(c) && !no_gold.contains(&c) {
-                    for inner in &bag_contains[c] {
+                if contains.contains_key(c) && !no_gold.contains(&c) {
+                    for (inner, _) in &contains[c] {
                         working.push(inner);
                     }
                 }
@@ -103,7 +113,7 @@ pub fn parse_bags(data: &str) -> (usize, usize) {
     let mut gold_count = 0;
     let mut gold_working = vec![];
 
-    for (bag, count) in contains.entry("shiny gold").or_default() {
+    for (bag, count) in contains.entry(my_bag_type).or_default() {
         gold_working.push((*bag, *count));
     }
 
@@ -115,7 +125,7 @@ pub fn parse_bags(data: &str) -> (usize, usize) {
 
             let sub_bags = contains.get(bags);
 
-            if let Some(subs) = sub_bags { 
+            if let Some(subs) = sub_bags {
                 for (ibag, icount) in subs {
                     repacked.push((*ibag, *icount * count));
                 }
@@ -123,6 +133,7 @@ pub fn parse_bags(data: &str) -> (usize, usize) {
         }
 
         gold_working.clear();
+
         for (bag, count) in repacked {
             gold_working.push((bag, count));
         }
@@ -130,9 +141,7 @@ pub fn parse_bags(data: &str) -> (usize, usize) {
         if gold_working.is_empty() {
             break;
         }
-
     }
-
 
     (contains_gold.len(), gold_count)
 }
@@ -146,5 +155,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_all() {}
+    fn test_all() {
+        assert_eq!((169, 82372), parse_bags(&data(), "shiny gold"));
+    }
 }
