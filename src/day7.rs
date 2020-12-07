@@ -13,17 +13,20 @@ pub fn run() {
     let cbytes = include_bytes!("../data/data7.txt");
     let contents = String::from_utf8_lossy(cbytes);
 
-    let res = parse_bags(&contents);
+    let (contains_gold, in_gold) = parse_bags(&contents);
 
     let timed = SystemTime::now().duration_since(start).unwrap();
-    println!("{} bag types contain shiny gold bags.", fmt_bright(&res));
+    println!("{} bag types contain shiny gold bags.", fmt_bright(&contains_gold));
+    println!("Each gold shiny bag contains {} bags in total.", fmt_bright(&in_gold));
 
     print_duration(timed);
 }
 
-pub fn parse_bags(data: &str) -> usize {
+pub fn parse_bags(data: &str) -> (usize, usize) {
     let mut bag_contains: HashMap<&str, Vec<&str>> = HashMap::new();
     let mut contains_gold = HashSet::new();
+
+    let mut contains: HashMap<&str, Vec<(&str, usize)>> = HashMap::new();
 
     let parsed = DParser::parse(Rule::file, data)
         .expect("could not parse data")
@@ -43,7 +46,7 @@ pub fn parse_bags(data: &str) -> usize {
             if sub.as_rule() == Rule::somebags {
                 let mut bits = sub.into_inner();
                 let bag_bit = bits.next();
-                let _count = bag_bit.unwrap().as_str().parse::<usize>().unwrap();
+                let count = bag_bit.unwrap().as_str().parse::<usize>().unwrap();
                 let what = bits.next().unwrap().as_str();
                 if what == "shiny gold" {
                     contains_gold.insert(bag_name);
@@ -53,6 +56,7 @@ pub fn parse_bags(data: &str) -> usize {
                     contains_gold.insert(bag_name);
                 }
                 bag_contains.entry(bag_name).or_insert(vec![]).push(what);
+                contains.entry(bag_name).or_insert(vec![]).push((what, count));
             }
         }
     }
@@ -95,7 +99,42 @@ pub fn parse_bags(data: &str) -> usize {
         }
     }
 
-    contains_gold.len()
+    // Work out the gold contents
+    let mut gold_count = 0;
+    let mut gold_working = vec![];
+
+    for (bag, count) in contains.entry("shiny gold").or_default() {
+        gold_working.push((*bag, *count));
+    }
+
+    loop {
+        let mut repacked = vec![];
+        // We unpack each bag in turn.
+        for (bags, count) in &gold_working {
+            gold_count += count;
+
+            let sub_bags = contains.get(bags);
+
+            if let Some(subs) = sub_bags { 
+                for (ibag, icount) in subs {
+                    repacked.push((*ibag, *icount * count));
+                }
+            }
+        }
+
+        gold_working.clear();
+        for (bag, count) in repacked {
+            gold_working.push((bag, count));
+        }
+
+        if gold_working.is_empty() {
+            break;
+        }
+
+    }
+
+
+    (contains_gold.len(), gold_count)
 }
 
 #[derive(Parser)]
