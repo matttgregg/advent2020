@@ -6,9 +6,8 @@ use std::time::SystemTime;
 
 use advent2020::{fmt_bright, print_day, print_duration};
 
-fn data() -> String {
-    let cbytes = include_bytes!("../data/data7.txt");
-    String::from_utf8_lossy(cbytes).to_string()
+fn data() -> &'static str {
+    include_str!("../data/data7.txt")
 }
 
 pub fn run() {
@@ -16,7 +15,7 @@ pub fn run() {
 
     let start = SystemTime::now();
 
-    let (contains_gold, in_gold) = parse_bags(&data(), "shiny gold");
+    let (contains_gold, in_gold) = parse_bags(data(), "shiny gold");
 
     let timed = SystemTime::now().duration_since(start).unwrap();
     println!(
@@ -156,6 +155,6 @@ mod tests {
 
     #[test]
     fn test_all() {
-        assert_eq!((169, 82372), parse_bags(&data(), "shiny gold"));
+        assert_eq!((169, 82372), parse_bags(data(), "shiny gold"));
     }
 }

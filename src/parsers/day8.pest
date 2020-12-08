@@ -1,0 +1,9 @@
+file = { SOI ~ instruction+ ~ NEWLINE? ~ EOI }
+
+instruction = { op ~ signedval ~ NEWLINE? }
+op = @{ "nop" | "acc" | "jmp" }
+signedval= @{ sign ~ val }
+val = { ASCII_DIGIT+ }
+sign = { ("+" | "-") }
+
+WHITESPACE = _{ " " }

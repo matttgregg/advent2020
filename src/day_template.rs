@@ -2,9 +2,8 @@ use std::time::SystemTime;
 
 use advent2020::{fmt_bright, print_day, print_duration};
 
-fn data() -> String {
-    let cbytes = include_bytes!("../data/data<DAY>.txt");
-    String::from_utf8_lossy(cbytes).to_string()
+fn data() -> &'static str {
+    include_str!("../data/data<DAY>.txt")
 }
 
 pub fn run() {
