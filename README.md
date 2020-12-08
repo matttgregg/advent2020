@@ -100,3 +100,18 @@ Observations for the day:
     full use of the loops I do create. I can't get too excited about wringing more performance from this.
     
 # Day 8
+
+Happy to see a VM type challenge come up. Nicely designed, the problem (at least the second part) is not purely implementing the VM. The VM itself is quite 
+clear (so far...). Regular, human readable instruction names. Everything has similar numbers of arguments.
+
+* Again, I went in with a Pest parser at first, definitely overkill here. I rewrote later to just match the strings directly (no real need even for 
+regex) and was pleasantly surprised to see it made almost no difference to performance. The generated pest parsers seem to be fairly efficient.
+
+* More learning and understanding of rust, playing with loops and style. The interesting thing that caught me was converting between i64 and usize, and 
+wrap around. I got around it early due to a. running in release mode (no overflow checks), and b. usize = u64 on my architecture. I was grateful to be runnning
+clippy in pedantic mode, so went the extra mile to remove my conversions properly. Interesting to handle them in a watertight fashion.
+
+* Performance again bouncing around the 1ms mark. Re-implemented part 2 to use a back tracking approach rather than start from scratch, and shaved maybe a
+third off that. Still not hitting problems where performance is a critical bottle neck. 
+
+* Everyone seems in agreement that the difficulty curve is slowly rising, so looking forward to an interesting week ahead.
