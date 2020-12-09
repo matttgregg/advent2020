@@ -7,29 +7,6 @@ fn data() -> &'static str {
     include_str!("../data/data9.txt")
 }
 
-fn data_test() -> &'static str {
-    "35
-20
-15
-25
-47
-40
-62
-55
-65
-95
-102
-117
-150
-182
-127
-219
-299
-277
-309
-576"
-}
-
 pub fn run() {
     print_day(9);
 
@@ -73,20 +50,26 @@ fn verify_data(data: &str, window :usize) -> (i64, i64) {
     }
 
     // Now search for range which sums to this.
-    for (i, _lower) in vals.iter().enumerate() {
-        let mut upper = i + 1;
-        while vals[i..upper].iter().sum::<i64>() < invalid {
-            upper += 1;
-        }
+    let mut lower = 0;
+    let mut upper = 0;
+    let mut total = 0;
 
-        if vals[i..upper].iter().sum::<i64>() == invalid {
-
+    while upper < vals.len() {
+        if total == invalid {
             // Now search for min/max values
-            let max = vals[i..upper].iter().max().unwrap_or(&0);
-            let min = vals[i..upper].iter().min().unwrap_or(&0);
+            let max = vals[lower..upper].iter().max().unwrap_or(&0);
+            let min = vals[lower..upper].iter().min().unwrap_or(&0);
             return (invalid, min + max);
         }
 
+        if total < invalid {
+            total += vals[upper];
+            upper += 1;
+
+        } else {
+            total -= vals[lower];
+            lower += 1;
+        }
     }
 
     (invalid, 0)
@@ -97,5 +80,28 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_all() {}
+    fn test_all() {
+   let test_data = "35
+20
+15
+25
+47
+40
+62
+55
+65
+95
+102
+117
+150
+182
+127
+219
+299
+277
+309
+576";
+        assert_eq!((127, 62), verify_data(test_data, 5));
+        assert_eq!((675280050,96081673), verify_data(data(), 25));
+    }
 }
