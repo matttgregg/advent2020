@@ -15,6 +15,9 @@ December was coming. I've done some Advent of code for the past couple of years 
 so I quickly finished off the last few chapters of the Rust book (slight skimming, but hopefully got enough) and ready to 
 get going.
 
+Disclaimer - not a professional Rust programmer, so often I'll try things a few ways, hack code about just to see how things look. Code may well look weird
+(which I'd be happy to receive pointers on!), and no guarantees on the qualirt of commits.
+
 ## Day 1
 
 A gentle start, and one that I've seen come up previously in coding challenges. Nothing too complicated, and good warmup to setting up my rust environment, 
@@ -115,3 +118,20 @@ clippy in pedantic mode, so went the extra mile to remove my conversions properl
 third off that. Still not hitting problems where performance is a critical bottle neck. 
 
 * Everyone seems in agreement that the difficulty curve is slowly rising, so looking forward to an interesting week ahead.
+
+# Day 9
+
+A nice problem here, in some ways felt like an extension of the ideas introduced in day 1 (find pairs that sum to a target), and ratcheted
+it up enough that efficient solutions are worthwhile.
+
+Ended up using a hash set look up for totals again, and otherwise rolling window/pointer approaches. With my crude timings this looks to 
+be one of the most efficient days (~300us on my laptop).
+
+* After completing and looking at other peoples solutions, I notice there's often a trade off between efficiency and expressivity. Some (in several
+different languages) express the problem well trading off some performance. My solution errs a little more on efficiency. As always, best solutions are
+going to depend on context.
+
+* Feels like we didn't really get to the bottom of hacking the flight computer and XMAS code today. Wouldn't be surprised to see more tomorrow.
+
+* Who's instinct, on first getting onto the plane, is to hack into the flight computer? I'm a little creeped out that we didn't even have a slight
+motivation for doing this. :)
