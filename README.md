@@ -135,3 +135,26 @@ going to depend on context.
 
 * Who's instinct, on first getting onto the plane, is to hack into the flight computer? I'm a little creeped out that we didn't even have a slight
 motivation for doing this. :)
+
+# Day 10
+
+:D Pleasantly uneven parts 1 and 2. Part 1 - sort and count the gap sizes. Part 2...
+(Probably not just me - looking at the official AoC stats page this day has a significant number of people with just part 1 complete, a much larger
+proportion than on previous days.)
+
+Neither need extremely esoteric solutions. Part 2 falls quickly to some dynamic programming, and well known tricks to avoid wasteful calculations. The 
+interesting part is that without some sort of smart ass-ery to improve efficiency, you're likely looking at your computer melting before getting anywhere.
+(Previous days have been much more lenient on inefficient solutions.) Done cleanly however, my runtime comes in happily under 1 ms.
+
+Also - fewer problems with the borrow checker, getting a much stronger intuition for working with the language, what's idiomatic, how to read it.
+
+Looking around at some other solutions:
+
+* Analytical solutions. I need to get my head around these.
+
+* Tricks to sub-divide the problem. This is really interesting - visualizations show that the problem does easily sub-divide (and easy enough to see why), which
+allows a more straight solution. The interesting thing is that the dynamic programming approach with blind memo-ization takes advantage of this *even without
+explicitly coding it*, which is cool. Generally however, I do agree that getting a 'feel' for a problem is a really important, besides just throwing a generalised
+algorithm at it.
+
+When I have time, I might remove the recursion as an exercise. It's always a good thing to do for practice.
