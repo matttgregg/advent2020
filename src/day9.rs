@@ -21,7 +21,7 @@ pub fn run() {
     print_duration(timed);
 }
 
-fn verify_data(data: &str, window :usize) -> (i64, i64) {
+fn verify_data(data: &str, window: usize) -> (i64, i64) {
     let vals: Vec<i64> = data.lines().filter_map(|x| x.parse::<i64>().ok()).collect();
     let mut checking = HashSet::new();
     let mut invalid = 0;
@@ -65,7 +65,6 @@ fn verify_data(data: &str, window :usize) -> (i64, i64) {
         if total < invalid {
             total += vals[upper];
             upper += 1;
-
         } else {
             total -= vals[lower];
             lower += 1;
@@ -81,7 +80,7 @@ mod tests {
 
     #[test]
     fn test_all() {
-   let test_data = "35
+        let test_data = "35
 20
 15
 25
@@ -102,6 +101,6 @@ mod tests {
 309
 576";
         assert_eq!((127, 62), verify_data(test_data, 5));
-        assert_eq!((675280050,96081673), verify_data(data(), 25));
+        assert_eq!((675280050, 96081673), verify_data(data(), 25));
     }
 }
