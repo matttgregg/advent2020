@@ -1,14 +1,11 @@
 use std::collections::HashMap;
 use std::time::SystemTime;
+use std::convert::TryInto;
 
 use advent2020::{fmt_bright, print_day, print_duration};
 
 fn data() -> &'static str {
     include_str!("../data/data11.txt")
-}
-
-fn data_small() -> &'static str {
-    include_str!("../data/data11_small.txt")
 }
 
 pub fn run() {
@@ -17,42 +14,109 @@ pub fn run() {
     let start = SystemTime::now();
 
     // Let's do this...
-    run_day(data_small());
-    run_day(data());
+    let (rounds, occupied) = run_day(data(), &NeighbourMode::Adjacent);
+    println!("For adjacent neighbours, stabilised after {} rounds, {} seats occupied.", rounds, fmt_bright(&occupied));
+    let (rounds2, occupied2) = run_day(data(), &NeighbourMode::Sight);
+    println!("For line of sight neighbour, stabilised after {} rounds, {} seats occupied.", rounds2, fmt_bright(&occupied2));
 
     let timed = SystemTime::now().duration_since(start).unwrap();
     print_duration(timed);
 }
 
-fn run_day(plan: &str) {
+enum NeighbourMode {
+    Adjacent,
+    Sight
+}
+
+fn run_day(plan: &str, mode: &NeighbourMode) -> (i32, i32) {
     // Load the data
-    let mut floor_now = HashMap::new();
+    let mut floor_now: HashMap<(i32, i32), Tile> = HashMap::new();
 
     for (i, line) in plan.lines().enumerate() {
         for (j, c) in line.chars().enumerate() {
+            let ix: i32 = i.try_into().unwrap();
+            let jx: i32 = j.try_into().unwrap();
             match c {
-                'L' => floor_now.insert((i, j), Tile::EmptySeat),
-                '#' => floor_now.insert((i, j), Tile::FullSeat),
-                '.' => floor_now.insert((i, j), Tile::Floor),
-                 _ => floor_now.insert((i, j), Tile::Floor),
+                '#' => floor_now.insert((ix, jx), Tile::FullSeat),
+                'L' => floor_now.insert((ix, jx), Tile::EmptySeat),
+                 _ => floor_now.insert((ix, jx), Tile::Floor),
             };
         }
     }
 
+
+    // Work out the 'neighbours' for each element.
+    let (neighbours, sensitivity) = match mode {
+        NeighbourMode::Adjacent => (neighbours_adjacent(&floor_now), 4),
+        NeighbourMode::Sight => (neighbours_sight(&floor_now), 5),
+    };
+
     let mut round = 1;
     loop {
-        let (next, changed, occupied) = next_day(&floor_now);
-        println!("[{}] {} occupied seats. (Change = {})", round, occupied, changed);
+        let (next, changed, occupied) = next_day(&floor_now, &neighbours, sensitivity);
         if changed == 0 {
-            break;
+            break (round, occupied)
         }
         round += 1;
         floor_now = next;
     }
 }
 
-fn next_day(now: &HashMap<(usize, usize), Tile>) -> (HashMap<(usize, usize), Tile>, usize, usize) {
-    let mut next: HashMap<(usize, usize), Tile> = HashMap::new();
+fn neighbours_sight(plan: &HashMap<(i32, i32), Tile>) -> HashMap<(i32, i32), Vec<(i32, i32)>> {
+    let mut neighbour_map = HashMap::new();
+    let directions = vec![(0, -1), (0, 1), (1, -1), (1, 0), (1, 1), (-1, -1), (-1, 0), (-1, 1)];
+
+    for (i, j) in plan.keys() {
+        let mut neighbours = vec![];
+        for (di, dj) in &directions {
+            let mut try_i = i + di;
+            let mut try_j = j + dj;
+            loop {
+                let maybe_neighbour = plan.get(&(try_i, try_j));
+                // If none - we're outside the room. Nothing more to see.
+                if maybe_neighbour == None {
+                    break;
+                }
+
+                // Not floor - this is the neighbour we're interested in.
+                if maybe_neighbour != Some(&Tile::Floor) {
+                    neighbours.push((try_i, try_j));
+                    break;
+                }
+
+                // It's floor. We keep looking.
+                try_i += di;
+                try_j += dj;
+            }
+        }
+        neighbour_map.insert((*i, *j), neighbours);
+    }
+
+    neighbour_map
+}
+
+fn neighbours_adjacent(plan: &HashMap<(i32, i32), Tile>) -> HashMap<(i32, i32), Vec<(i32, i32)>> {
+    let mut neighbour_map = HashMap::new();
+    let directions = vec![(0, -1), (0, 1), (1, -1), (1, 0), (1, 1), (-1, -1), (-1, 0), (-1, 1)];
+
+    for (i, j) in plan.keys() {
+        let mut neighbours = vec![];
+        for (di, dj) in &directions {
+            let try_i = i + di;
+            let try_j = j + dj;
+            let maybe_neighbour = plan.get(&(try_i, try_j));
+            if maybe_neighbour != None && maybe_neighbour != Some(&Tile::Floor) {
+                neighbours.push((try_i, try_j));
+            }
+        }
+        neighbour_map.insert((*i, *j), neighbours);
+    }
+
+    neighbour_map
+}
+
+fn next_day(now: &HashMap<(i32, i32), Tile>, neighbours: &HashMap<(i32, i32), Vec<(i32, i32)>>, sensitivity: i32) -> (HashMap<(i32, i32), Tile>, i32, i32) {
+    let mut next: HashMap<(i32, i32), Tile> = HashMap::new();
     let mut changed = 0;
     let mut occupied = 0;
 
@@ -63,44 +127,13 @@ fn next_day(now: &HashMap<(usize, usize), Tile>) -> (HashMap<(usize, usize), Til
             next.insert((*i, *j), Tile::Floor);
         } else {
             // Count occupied neighbours
-            if *i > 0 {
-                if *j > 0 {
-                    if let Some(Tile::FullSeat) = now.get(&(*i -1, *j - 1)) {
+            if let Some(tile_neighbours) = neighbours.get(&(*i, *j)) {
+                for neighbour in tile_neighbours {
+                    if let Some(Tile::FullSeat) = now.get(neighbour)  {
                         count += 1;
                     }
                 }
-                
-                if let Some(Tile::FullSeat) = now.get(&(*i - 1, *j)) {
-                    count += 1;
-                }
-                
-                if let Some(Tile::FullSeat) = now.get(&(*i - 1, *j + 1)) {
-                    count += 1;
-                }
             }
-
-            if *j > 0 {
-                if let Some(Tile::FullSeat) = now.get(&(*i, *j - 1)) {
-                    count += 1;
-                }
-
-                if let Some(Tile::FullSeat) = now.get(&(*i + 1, *j - 1)) {
-                    count += 1;
-                }
-            }
-
-            if let Some(Tile::FullSeat) = now.get(&(*i + 1, *j)) {
-                count += 1;
-            }
-
-            if let Some(Tile::FullSeat) = now.get(&(*i, *j + 1)) {
-                count += 1;
-            }
-
-
-                if let Some(Tile::FullSeat) = now.get(&(*i + 1, *j + 1)) {
-                    count += 1;
-                }
 
             if count == 0 {
                 next.insert((*i, *j), Tile::FullSeat);
@@ -108,7 +141,7 @@ fn next_day(now: &HashMap<(usize, usize), Tile>) -> (HashMap<(usize, usize), Til
                 if *tile != Tile::FullSeat {
                     changed += 1;
                 }
-            } else if count >= 4 {
+            } else if count >= sensitivity {
                 next.insert((*i, *j), Tile::EmptySeat);
                 if *tile != Tile::EmptySeat {
                     changed += 1;
@@ -137,5 +170,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_all() {}
+    fn test_small() {
+        let data_small = include_str!("../data/data11_small.txt");
+        assert_eq!((6, 37), run_day(&data_small, &NeighbourMode::Adjacent));
+        assert_eq!((7, 26), run_day(&data_small, &NeighbourMode::Sight));
+    }
+
+    #[test]
+    #[ignore] 
+    fn test_full() {
+        assert_eq!((84, 2344), run_day(data(), &NeighbourMode::Adjacent));
+        assert_eq!((87, 2076), run_day(data(), &NeighbourMode::Sight));
+    }
 }
