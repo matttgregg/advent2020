@@ -31,15 +31,24 @@ enum NeighbourMode {
 fn run_day(plan: &str, mode: &NeighbourMode) -> (i32, i32) {
     // Load the data
     let mut floor_now: HashMap<(i32, i32), Tile> = HashMap::new();
+    let mut seats_only: HashMap<(i32, i32), Tile> = HashMap::new();
 
     for (i, line) in plan.lines().enumerate() {
         for (j, c) in line.chars().enumerate() {
             let ix: i32 = i.try_into().unwrap();
             let jx: i32 = j.try_into().unwrap();
             match c {
-                '#' => floor_now.insert((ix, jx), Tile::FullSeat),
-                'L' => floor_now.insert((ix, jx), Tile::EmptySeat),
-                 _ => floor_now.insert((ix, jx), Tile::Floor),
+                '#' => {
+                    floor_now.insert((ix, jx), Tile::FullSeat);
+                    seats_only.insert((ix, jx), Tile::FullSeat);
+                },
+                'L' => {
+                    floor_now.insert((ix, jx), Tile::EmptySeat);
+                    seats_only.insert((ix, jx), Tile::EmptySeat);
+                },
+                _ => {
+                    floor_now.insert((ix, jx), Tile::Floor);
+                },
             };
         }
     }
@@ -53,18 +62,25 @@ fn run_day(plan: &str, mode: &NeighbourMode) -> (i32, i32) {
 
     let mut round = 1;
     loop {
-        let (next, changed, occupied) = next_day(&floor_now, &neighbours, sensitivity);
+        let (next, changed, occupied) = next_day(&seats_only, &neighbours, sensitivity);
         if changed == 0 {
             break (round, occupied)
         }
         round += 1;
-        floor_now = next;
+        seats_only = next;
     }
 }
-
 fn neighbours_sight(plan: &HashMap<(i32, i32), Tile>) -> HashMap<(i32, i32), Vec<(i32, i32)>> {
+    neighbours_internal(plan, true)
+}
+
+fn neighbours_adjacent(plan: &HashMap<(i32, i32), Tile>) -> HashMap<(i32, i32), Vec<(i32, i32)>> {
+    neighbours_internal(plan, false)
+}
+
+fn neighbours_internal(plan: &HashMap<(i32, i32), Tile>, follow_sight: bool) -> HashMap<(i32, i32), Vec<(i32, i32)>> {
     let mut neighbour_map = HashMap::new();
-    let directions = vec![(0, -1), (0, 1), (1, -1), (1, 0), (1, 1), (-1, -1), (-1, 0), (-1, 1)];
+    let directions = [(0, -1), (0, 1), (1, -1), (1, 0), (1, 1), (-1, -1), (-1, 0), (-1, 1)];
 
     for (i, j) in plan.keys() {
         let mut neighbours = vec![];
@@ -84,29 +100,14 @@ fn neighbours_sight(plan: &HashMap<(i32, i32), Tile>) -> HashMap<(i32, i32), Vec
                     break;
                 }
 
-                // It's floor. We keep looking.
+                // We're not following sight lines.
+                if !follow_sight {
+                    break;
+                }
+
+                // We look through the empty floor.
                 try_i += di;
                 try_j += dj;
-            }
-        }
-        neighbour_map.insert((*i, *j), neighbours);
-    }
-
-    neighbour_map
-}
-
-fn neighbours_adjacent(plan: &HashMap<(i32, i32), Tile>) -> HashMap<(i32, i32), Vec<(i32, i32)>> {
-    let mut neighbour_map = HashMap::new();
-    let directions = vec![(0, -1), (0, 1), (1, -1), (1, 0), (1, 1), (-1, -1), (-1, 0), (-1, 1)];
-
-    for (i, j) in plan.keys() {
-        let mut neighbours = vec![];
-        for (di, dj) in &directions {
-            let try_i = i + di;
-            let try_j = j + dj;
-            let maybe_neighbour = plan.get(&(try_i, try_j));
-            if maybe_neighbour != None && maybe_neighbour != Some(&Tile::Floor) {
-                neighbours.push((try_i, try_j));
             }
         }
         neighbour_map.insert((*i, *j), neighbours);
