@@ -77,12 +77,11 @@ fn run_day(plan: &str, mode: &NeighbourMode) -> (i32, i32) {
 
     let mut round = 1;
     loop {
-        let (next, changed, occupied) = next_day(&seats_only, &floor_now, &neighbours, sensitivity);
+        let (changed, occupied) = next_day(&seats_only, &mut floor_now, &neighbours, sensitivity);
         if changed == 0 {
             break (round, occupied);
         }
         round += 1;
-        floor_now = next;
     }
 }
 fn neighbours_sight(plan: &[Vec<Tile>]) -> Vec<Vec<Vec<(usize, usize)>>> {
@@ -163,51 +162,45 @@ fn neighbours_internal(plan: &[Vec<Tile>], follow_sight: bool) -> Vec<Vec<Vec<(u
 
 fn next_day(
     seats: &[(usize, usize)],
-    now: &[Vec<Tile>],
+    now: &mut [Vec<Tile>],
     neighbours: &[Vec<Vec<(usize, usize)>>],
     sensitivity: i32,
-) -> (Vec<Vec<Tile>>, i32, i32) {
-    let mut next: Vec<Vec<Tile>> = Vec::with_capacity(now.len());
+) -> (i32, i32) {
     let mut changed = 0;
     let mut occupied = 0;
+    let mut changed_seats: Vec<(usize, usize, Tile)> = Vec::with_capacity(seats.len());
 
     for (i, j) in seats {
-        while next.len() <= *i {
-            next.push(vec![Tile::Floor; *j])
-        }
-        while next[*i].len() <= *j {
-            next[*i].push(Tile::Floor);
-        }
-
         let mut count = 0;
         let tile = now[*i][*j];
-            // Count occupied neighbours
-                for (ni, nj) in &neighbours[*i][*j] {
-                    if now[*ni][*nj] == Tile::FullSeat {
-                        count += 1;
-                    }
-                }
-
-            if count == 0 {
-                next[*i][*j] = Tile::FullSeat;
-                occupied += 1;
-                if tile != Tile::FullSeat {
-                    changed += 1;
-                }
-            } else if count >= sensitivity {
-                next[*i][*j] = Tile::EmptySeat;
-                if tile != Tile::EmptySeat {
-                    changed += 1;
-                }
-            } else {
-                next[*i][*j] = tile;
-                if tile == Tile::FullSeat {
-                    occupied += 1;
-                }
+        // Count occupied neighbours
+        for (ni, nj) in &neighbours[*i][*j] {
+            if now[*ni][*nj] == Tile::FullSeat {
+                count += 1;
             }
+        }
+
+        if count == 0 {
+            occupied += 1;
+            if tile != Tile::FullSeat {
+                changed_seats.push((*i, *j, Tile::FullSeat));
+                changed += 1;
+            }
+        } else if count >= sensitivity {
+            if tile != Tile::EmptySeat {
+                changed_seats.push((*i, *j, Tile::EmptySeat));
+                changed += 1;
+            }
+        } else if tile == Tile::FullSeat {
+            occupied += 1;
+        }
     }
 
-    (next, changed, occupied)
+    for (i, j, tile) in changed_seats {
+        now[i][j] = tile;
+    }
+
+    (changed, occupied)
 }
 
 mod tests {
