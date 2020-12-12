@@ -18,23 +18,18 @@ pub fn run() {
     voyage(data(), &mut ferry1);
     voyage(data(), &mut ferry2);
 
-    let data_small = "F10
-N3
-F7
-R90
-F11";
-    let mut small_ferry1 = Boat::new();
-    let mut small_ferry2 = BoatWithWaypoint::new();
-    voyage(&data_small, &mut small_ferry1);
-    voyage(&data_small, &mut small_ferry2);
-
     let timed = SystemTime::now().duration_since(start).unwrap();
+    println!("Sailing... {}, {} leagues away.", ferry1.announce(), fmt_bright(&ferry1.manhattan()));
+    println!("Back to port, consult the charts... {}, {} leagues away.", ferry2.announce(), fmt_bright(&ferry2.manhattan()));
     print_duration(timed);
 }
 
 fn voyage(route: &str, ferry: &mut impl Navigable) {
     for mv in route.lines() {
-        let digits = mv.chars().filter(|x| x.is_digit(10) || (*x == '-')).collect::<String>();
+        let digits = mv
+            .chars()
+            .filter(|x| x.is_digit(10) || (*x == '-'))
+            .collect::<String>();
         let d = digits.parse::<i64>();
 
         if let Ok(dist) = d {
@@ -46,11 +41,10 @@ fn voyage(route: &str, ferry: &mut impl Navigable) {
                 "L" => ferry.left(dist),
                 "R" => ferry.right(dist),
                 "F" => ferry.forward(dist),
-                _ => {},
+                _ => {}
             };
         }
     }
-    println!("{}", ferry.announce()); 
 }
 
 trait Navigable {
@@ -61,7 +55,8 @@ trait Navigable {
     fn west(&mut self, d: i64);
     fn left(&mut self, d: i64);
     fn right(&mut self, d: i64);
-    fn announce(& self) -> String;
+    fn announce(&self) -> String;
+    fn manhattan(&self) -> i64;
 }
 
 struct BoatWithWaypoint {
@@ -73,7 +68,12 @@ struct BoatWithWaypoint {
 
 impl BoatWithWaypoint {
     fn new() -> Self {
-        BoatWithWaypoint { x:0,y:0, waypoint_x:10, waypoint_y:1}
+        BoatWithWaypoint {
+            x: 0,
+            y: 0,
+            waypoint_x: 10,
+            waypoint_y: 1,
+        }
     }
 }
 
@@ -82,66 +82,117 @@ impl Navigable for BoatWithWaypoint {
         self.x += d * self.waypoint_x;
         self.y += d * self.waypoint_y;
     }
-    
+
     fn left(&mut self, angle: i64) {
         match angle {
-            0 => {},
-            90 => { mem::swap(&mut self.waypoint_x, &mut self.waypoint_y); self.waypoint_x *= -1; }
-            180 => { self.waypoint_x *= -1; self.waypoint_y *= -1;}
-            270 => { mem::swap(&mut self.waypoint_x, &mut self.waypoint_y); self.waypoint_y *= -1; }
-            _ => { println!("Unexpected angle {}", angle); panic!("Invalid angle."); }
+            0 => {}
+            90 => {
+                mem::swap(&mut self.waypoint_x, &mut self.waypoint_y);
+                self.waypoint_x *= -1;
+            }
+            180 => {
+                self.waypoint_x *= -1;
+                self.waypoint_y *= -1;
+            }
+            270 => {
+                mem::swap(&mut self.waypoint_x, &mut self.waypoint_y);
+                self.waypoint_y *= -1;
+            }
+            _ => {
+                println!("Unexpected angle {}", angle);
+                panic!("Invalid angle.");
+            }
         }
     }
-    
+
     fn right(&mut self, angle: i64) {
         match angle {
-            0 => {},
-            90 => { mem::swap(&mut self.waypoint_x, &mut self.waypoint_y); self.waypoint_y *= -1; }
-            180 => { self.waypoint_x *= -1; self.waypoint_y *= -1;}
-            270 => { mem::swap(&mut self.waypoint_x, &mut self.waypoint_y); self.waypoint_x *= -1; }
-            _ => { println!("Unexpected angle {}", angle); panic!("Invalid angle."); }
+            0 => {}
+            90 => {
+                mem::swap(&mut self.waypoint_x, &mut self.waypoint_y);
+                self.waypoint_y *= -1;
+            }
+            180 => {
+                self.waypoint_x *= -1;
+                self.waypoint_y *= -1;
+            }
+            270 => {
+                mem::swap(&mut self.waypoint_x, &mut self.waypoint_y);
+                self.waypoint_x *= -1;
+            }
+            _ => {
+                println!("Unexpected angle {}", angle);
+                panic!("Invalid angle.");
+            }
         }
     }
 
-    fn north(&mut self, d: i64) { self.waypoint_y += d; }
-    fn south(&mut self, d: i64) { self.waypoint_y -= d; }
-    fn east(&mut self, d: i64) { self.waypoint_x += d; }
-    fn west(&mut self, d: i64) { self.waypoint_x -= d; }
+    fn north(&mut self, d: i64) {
+        self.waypoint_y += d;
+    }
+    fn south(&mut self, d: i64) {
+        self.waypoint_y -= d;
+    }
+    fn east(&mut self, d: i64) {
+        self.waypoint_x += d;
+    }
+    fn west(&mut self, d: i64) {
+        self.waypoint_x -= d;
+    }
 
-    fn announce(& self) -> String { format!(" -> {},{} (Waypoint {}, {}) [{}]",
-                                            self.x, self.y,
-                                            self.waypoint_x, self.waypoint_y,
-                                            self.x.abs() + self.y.abs()) }
-    
+    fn announce(&self) -> String {
+        format!(
+            " -> {},{} (Waypoint {}, {})",
+            self.x,
+            self.y,
+            self.waypoint_x,
+            self.waypoint_y,
+        )
+    }
+
+    fn manhattan(&self) -> i64 {
+        self.x.abs() + self.y.abs()
+    }
 }
-
 
 struct Boat {
     x: i64,
     y: i64,
-    dir: i64
+    dir: i64,
 }
 
 impl Boat {
     fn new() -> Self {
-        Boat { x:0,y:0, dir:90}
+        Boat {
+            x: 0,
+            y: 0,
+            dir: 90,
+        }
     }
 }
 
 impl Navigable for Boat {
     fn forward(&mut self, d: i64) {
         match self.dir {
-            0 => { self.north(d);},
-            90 => { self.east(d);},
-            180 => { self.south(d);},
-            270 => { self.west(d);},
+            0 => {
+                self.north(d);
+            }
+            90 => {
+                self.east(d);
+            }
+            180 => {
+                self.south(d);
+            }
+            270 => {
+                self.west(d);
+            }
             _ => {
                 println!("Direction! {}", self.dir);
                 panic!("Unexpected direction.");
-            },
+            }
         }
     }
-    
+
     fn left(&mut self, angle: i64) {
         self.dir -= angle;
         self.dir %= 360;
@@ -149,7 +200,7 @@ impl Navigable for Boat {
             self.dir += 360;
         }
     }
-    
+
     fn right(&mut self, angle: i64) {
         self.dir += angle;
         self.dir %= 360;
@@ -158,12 +209,30 @@ impl Navigable for Boat {
         }
     }
 
-    fn north(&mut self, d: i64) { self.y += d; }
-    fn south(&mut self, d: i64) { self.y -= d; }
-    fn east(&mut self, d: i64) { self.x += d; }
-    fn west(&mut self, d: i64) { self.x -= d; }
+    fn north(&mut self, d: i64) {
+        self.y += d;
+    }
+    fn south(&mut self, d: i64) {
+        self.y -= d;
+    }
+    fn east(&mut self, d: i64) {
+        self.x += d;
+    }
+    fn west(&mut self, d: i64) {
+        self.x -= d;
+    }
 
-    fn announce(& self) -> String { format!(" -> {},{} [{}]", self.x, self.y, self.x.abs() + self.y.abs()) }
+    fn announce(&self) -> String {
+        format!(
+            " -> {},{}",
+            self.x,
+            self.y,
+        )
+    }
+
+    fn manhattan(&self) -> i64 {
+        self.x.abs() + self.y.abs()
+    }
 }
 
 mod tests {
@@ -171,5 +240,27 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_all() {}
+    fn test_small() {
+        let data_small = "F10
+N3
+F7
+R90
+F11";
+        let mut ferry1 = Boat::new();
+        let mut ferry2 = BoatWithWaypoint::new();
+        voyage(&data_small, &mut ferry1);
+        voyage(&data_small, &mut ferry2);
+        assert_eq!((17, -8, 25), (ferry1.x, ferry1.y, ferry1.manhattan()));
+        assert_eq!((214, -72, 286), (ferry2.x, ferry2.y, ferry2.manhattan()));
+    }
+
+    #[test]
+    fn test_all() {
+        let mut ferry1 = Boat::new();
+        let mut ferry2 = BoatWithWaypoint::new();
+        voyage(data(), &mut ferry1);
+        voyage(data(), &mut ferry2);
+        assert_eq!((-268, -240, 508), (ferry1.x, ferry1.y, ferry1.manhattan()));
+        assert_eq!((-13588, -17173, 30761), (ferry2.x, ferry2.y, ferry2.manhattan()));
+    }
 }
