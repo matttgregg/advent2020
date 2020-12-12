@@ -158,3 +158,47 @@ explicitly coding it*, which is cool. Generally however, I do agree that getting
 algorithm at it.
 
 When I have time, I might remove the recursion as an exercise. It's always a good thing to do for practice.
+
+# Day 11
+
+Interesting this one, largely on how to do all this efficiently, and concisely. 
+The extension for part 2 requiring non-adjacent 'neighbours' (where I mean a neighbour to mean the cells which affect the current cell) is 
+interesting and important to keep code clear about.
+With any sort of problem like this, I try to follow my own advice:
+
+* Make the code clear. (Descriptive function names, descriptive variable names.)
+* Make the code modular and testable in pieces. It was extremely useful to be able to validate the 'neighbour' generation outside the whole 
+routine.
+
+I'll admit I haven't been as clean as I might be in production, particularly following refactoring. I've mainly used 'testable' here to mean
+that it's easy for me to put in debug statements, not that I've fully broken functions down to single responsibilities, but it's enough for
+these purposes.
+
+Following this, I got to a working solution (and claimed my starts) with some abysmal performance, and using hashes to look values up. It took a 
+few seconds to run. It's the first time I wrote a test which seemed to expensive to run automatically. However, rust gives you enough fine control
+to optimize - by flattening down to arrays, brutally reducing the amount of redundant work being done, squeezed it down to ~20ms. Still my slowest
+day yet, but in the right order of magnitude. There's probably more to be done (tighter representation - there's very little really needed) but
+I think I've reached my limit in the context of this problem.
+
+Unsurprisingly, lots of interesting visualizations today. The way the problem settles is quite interesting. I plan to attempt a few visualizations 
+at some later point, and this one is a good candidate.
+
+# Day 12
+
+Is this the slightly easier weekend problem? Computationally not too hard, although we do have a bit of state to worry about (e.g. the ferry has 
+a location *and* a heading.)
+
+* A few things make this easier - particularly realising that the only valid turns are quarter, half, three-quarter turns, so immediately 
+simplifies how turns work.
+
+* Thankfully, have fairly good geometric intuition (I'm a visual person!) and so didn't find it do hard to code up the various movements, even
+when the waypoint movements were introduced.
+
+* Computationally, not many tricks. Read instruction, update state, repeat. No real complexity problems to worry about.
+
+* Gave a chance to play with traits for a change. In this case I wrote two implementations for a `Navigable` trait. This allowed me to write once
+and forget the instruction parsing code. As always the code ends up verbose, but eloquent. Thinking if I was looking for a more battle-hardened 
+implementation it's quite easy to layer on the Rust error handling with `Result` return values. 
+
+* Again, a day which naturally leads itself to visualization. Probably less interesting than yesterdays (the route is exactly as described
+in the puzzle input - no surprises), but still impressed by the inventiveness of a lot of the Reddit coders.
