@@ -70,30 +70,29 @@ fn run_day(plan: &str, mode: &NeighbourMode) -> (i32, i32) {
     }
 
     // Work out the 'neighbours' for each element.
-    let (neighbours, sensitivity) = match mode {
+    let ((neighbours, mut now, seats), sensitivity) = match mode {
         NeighbourMode::Adjacent => (neighbours_adjacent(&floor_now), 4),
         NeighbourMode::Sight => (neighbours_sight(&floor_now), 5),
     };
 
     let mut round = 1;
     loop {
-        let (changed, occupied) = next_day(&seats_only, &mut floor_now, &neighbours, sensitivity);
+        let (changed, occupied) = next_day(&mut now, &neighbours, &seats, sensitivity);
         if changed == 0 {
             break (round, occupied);
         }
         round += 1;
     }
 }
-fn neighbours_sight(plan: &[Vec<Tile>]) -> Vec<Vec<Vec<(usize, usize)>>> {
+fn neighbours_sight(plan: &[Vec<Tile>]) -> (Vec<Vec<usize>>, Vec<u16>, Vec<usize>) {
     neighbours_internal(plan, true)
 }
 
-fn neighbours_adjacent(plan: &[Vec<Tile>]) -> Vec<Vec<Vec<(usize, usize)>>> {
+fn neighbours_adjacent(plan: &[Vec<Tile>]) -> (Vec<Vec<usize>>, Vec<u16>, Vec<usize>) {
     neighbours_internal(plan, false)
 }
 
-fn neighbours_internal(plan: &[Vec<Tile>], follow_sight: bool) -> Vec<Vec<Vec<(usize, usize)>>> {
-    let mut neighbour_map: Vec<Vec<Vec<(usize, usize)>>> = Vec::with_capacity(plan.len());
+fn neighbours_internal(plan: &[Vec<Tile>], follow_sight: bool) -> (Vec<Vec<usize>>, Vec<u16>, Vec<usize>) {
     let directions: Vec<(i32, i32)> = vec![
         (0, -1),
         (0, 1),
@@ -105,13 +104,22 @@ fn neighbours_internal(plan: &[Vec<Tile>], follow_sight: bool) -> Vec<Vec<Vec<(u
         (-1, 1),
     ];
 
+    let h = plan.len();
+    let w = plan[0].len();
+    let mut now: Vec<u16> = vec![0; w * h] ;
+    now.resize(w * h, 0);
+    let mut neighbour_map: Vec<Vec<usize>> = Vec::with_capacity(h * w);
+    neighbour_map.resize(h * w, vec![]);
+    let mut seats: Vec<usize> = Vec::with_capacity(h * w);
+
     for (i, row) in plan.iter().enumerate() {
-        neighbour_map.push(vec![Vec::with_capacity(8); row.len()]);
         for (j, v) in row.iter().enumerate() {
+            let curr_idx = i * w + j;
             if *v == Tile::Floor {
                 continue; // We don't need neighbours for the floor.
             }
-            neighbour_map[i][j] = Vec::with_capacity(8);
+            seats.push(curr_idx);
+            neighbour_map[curr_idx] = Vec::with_capacity(8);
             for (di, dj) in &directions {
                 let mut try_us_i: i32 = i.try_into().unwrap();
                 try_us_i += di;
@@ -138,9 +146,9 @@ fn neighbours_internal(plan: &[Vec<Tile>], follow_sight: bool) -> Vec<Vec<Vec<(u
                         break;
                     }
 
-                    // N ot floor - this is the neighbour we're interested in.
+                    // Not floor - this is the neighbour we're interested in.
                     if maybe_neighbour != Some(&Tile::Floor) {
-                        neighbour_map[i][j].push((try_i.unwrap(), try_j.unwrap()));
+                        neighbour_map[curr_idx].push(try_i.unwrap() * w + try_j.unwrap());
                         break;
                     }
 
@@ -157,47 +165,46 @@ fn neighbours_internal(plan: &[Vec<Tile>], follow_sight: bool) -> Vec<Vec<Vec<(u
         }
     }
 
-    neighbour_map
+    (neighbour_map, now, seats)
 }
 
 fn next_day(
-    seats: &[(usize, usize)],
-    now: &mut [Vec<Tile>],
-    neighbours: &[Vec<Vec<(usize, usize)>>],
-    sensitivity: i32,
+    now: &mut [u16],
+    neighbours: &[Vec<usize>],
+    seats: &[usize],
+    sensitivity: u16,
 ) -> (i32, i32) {
     let mut changed = 0;
     let mut occupied = 0;
-    let mut changed_seats: Vec<(usize, usize, Tile)> = Vec::with_capacity(seats.len());
+    let mut changed_seats: Vec<(usize, u16)> = Vec::with_capacity(neighbours.len());
 
-    for (i, j) in seats {
+    for seat in seats {
         let mut count = 0;
-        let tile = now[*i][*j];
+        let tile = now[*seat];
+            
         // Count occupied neighbours
-        for (ni, nj) in &neighbours[*i][*j] {
-            if now[*ni][*nj] == Tile::FullSeat {
-                count += 1;
-            }
+        for ni in &neighbours[*seat] {
+            count += now[*ni];
         }
 
         if count == 0 {
             occupied += 1;
-            if tile != Tile::FullSeat {
-                changed_seats.push((*i, *j, Tile::FullSeat));
+            if tile != 1 {
+                changed_seats.push((*seat, 1));
                 changed += 1;
             }
         } else if count >= sensitivity {
-            if tile != Tile::EmptySeat {
-                changed_seats.push((*i, *j, Tile::EmptySeat));
+            if tile != 0 {
+                changed_seats.push((*seat, 0));
                 changed += 1;
             }
-        } else if tile == Tile::FullSeat {
+        } else if tile == 1 {
             occupied += 1;
         }
     }
 
-    for (i, j, tile) in changed_seats {
-        now[i][j] = tile;
+    for (i, tile) in changed_seats {
+        now[i] = tile;
     }
 
     (changed, occupied)
@@ -215,7 +222,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_full() {
         assert_eq!((84, 2344), run_day(data(), &NeighbourMode::Adjacent));
         assert_eq!((87, 2076), run_day(data(), &NeighbourMode::Sight));
