@@ -1,4 +1,5 @@
 use std::time::SystemTime;
+use std::collections::HashMap;
 
 use advent2020::{fmt_bright, print_day, print_duration};
 
@@ -13,11 +14,53 @@ pub fn run() {
 
     // Let's do this...
     let waited = waiting_times(data());
+    let competition_solution = solve_competition(data());
 
     let timed = SystemTime::now().duration_since(start).unwrap();
     println!("My waiting number is {}", fmt_bright(&waited));
+    println!("Found a bus alignment at {}", fmt_bright(&competition_solution));
 
     print_duration(timed);
+}
+
+fn solve_competition(timetable: &str) -> u64 {
+    let mut data = timetable.lines();
+    data.next(); // Discard the start time for the competition.
+    
+    let mut bus_data = data.next().unwrap().split(',');
+    // Take the first bus.
+    let first_bus = bus_data.next().unwrap().parse::<u64>().unwrap();
+
+    let mut offset_buses: Vec<(u64, u64)> = vec![];
+    for (i, maybe_bus) in bus_data.enumerate() {
+        if let Ok(bus) = maybe_bus.parse::<u64>() {
+            offset_buses.push((bus, (i + 1) as u64));
+        }
+    }
+
+    let mut t = 0;
+    let mut delta = first_bus;
+    let mut alignment: HashMap<u64, u64> = HashMap::new(); // Track alignments.
+    loop {
+        let mut matched = true;
+        for (bus, offset) in &offset_buses {
+            if (t + offset) % bus == 0  {
+                // This bus *did* fit. Lock in this alignment.
+                if !alignment.contains_key(bus) {
+                    alignment.insert(*bus, t);
+                    delta *= bus;
+                }
+            } else {
+                // This bus didn't fit. Stop checking and move on.
+                matched = false;
+            }
+        }
+
+        if matched {
+            return t;
+        }
+        t += delta;
+    }
 }
 
 fn waiting_times(timetable: &str) -> u64 {
