@@ -39,6 +39,7 @@ fn solve_competition(timetable: &str) -> u64 {
     }
 
     let mut t = 0;
+    let mut iters = 0;
     let mut delta = first_bus;
     let mut alignment: HashMap<u64, u64> = HashMap::new(); // Track alignments.
     loop {
@@ -49,6 +50,7 @@ fn solve_competition(timetable: &str) -> u64 {
                 if !alignment.contains_key(bus) {
                     alignment.insert(*bus, t);
                     delta *= bus;
+                    println!("Aligned with {} after {} iterations. (New delta: {})", bus, iters, delta);
                 }
             } else {
                 // This bus didn't fit. Stop checking and move on.
@@ -57,8 +59,10 @@ fn solve_competition(timetable: &str) -> u64 {
         }
 
         if matched {
+            println!("Found a solution after {} iterations.", iters);
             return t;
         }
+        iters += 1;
         t += delta;
     }
 }

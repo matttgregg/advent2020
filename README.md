@@ -202,3 +202,51 @@ implementation it's quite easy to layer on the Rust error handling with `Result`
 
 * Again, a day which naturally leads itself to visualization. Probably less interesting than yesterdays (the route is exactly as described
 in the puzzle input - no surprises), but still impressed by the inventiveness of a lot of the Reddit coders.
+
+# Day 13
+
+Another day with a huge jump between parts one and two! Looking at the stats at the moment, I see about 14,000 have both stars, but 11,000 (i.e. 
+almost as many again!) only have the first star.
+
+Feeling fairly happy to have implemented both parts fairly quickly and without googling anything. I thought it might be instructive to 
+go through my thought processes:
+
+* Try brute force, just to get something down and check I understand the solution. Watch it get stuck for a few seconds and start to think.
+
+* Do any generic programming methods help here? Memoization? Dynamic programming? Not really - I'm not being wasteful in recomputing things, or
+computing things that I *obviously* don't need. Observation: an insight is needed to dramatically reduce what's being considered.
+
+* ... and I really do mean dramatic. My first bus is 13, so I'm only bothering to check multiples of 13 as my start point. (My answer time *must*
+be when that bus leaves.) I've got a bigger bus at 439 - I could be checking evering 439 instead, if I work relative to that bus... but 
+that's only ~40 times faster.
+
+* ... but... what if I was jumping and considering 13 *and* 439 at the same time? What would that look like?
+
+* Pick a tiny example to get a feeling for the problem. Bus3, the Bus5. I see an answer at t=9. (9 = 3*3, 10 = 2*5). Then ... think ...
+the next one is at 24 (24 = 8 * 3, 25 = 5 * 5). And then.. notice that the jump between these solutions is 15. And 15 = 3 * 5.
+
+* Trick. I do *not* bother to prove this. It *feels* right, and I know I can prove it later.
+
+* So I now feel towards a speculative algorithm. I start with a solution at 0, and jumping through by 13. If I find I align with a second bus, say
+439, then I know that I'll find another solution at (439 * 13), and following increments.
+
+* This is an algorithm that I can program! I have a niggle - is this going to be the *smallest* such? If my two bus numbers have a common
+factor, what will the consequence of that be. My maths intuition says things are going to be a bit different. 
+
+* I ignore these niggles and program it anyway! And I get the right answer.
+
+Working back afterwards we see that, yes, indeed co-primality is needed for this to work. But, it turns out in all inputs for AoC the bus
+numbers are co-prime. And, yes, the formal name for this is the chinese remainder theorem. 
+
+It's worth noting that often in these coding problems, there's a piece of meta information - the problem is soluble, the solution is achievable
+but a relatively bright person, the solution runs quickly. This gives some guidance on the sort of things that are worth trying. Also, it's 
+worth building in stages - I always knew I *might* have to add some special behaviour if the buses weren't co-prime,  but the simpler version
+is easier to program, and a natural waypoint.
+
+Finally, I attended, many years ago, a lecture on investigative number theory. The lecturer was enlightening on how he played with systems, tried
+things out, and saw what happened. I think often people don't see this investigative nature of advanced mathematics. I think that the lecturer
+mainly used Mathematica, obviously taking advantage of the expressive language, and the interactive environment. This is one aspect that I have 
+been missing in Rust. The language of Rust does mean you do need some level of confidence to see *through* the syntax into the mathematics at
+times. The interactive environment is hard to replace, but in practice we end up trying to work around with tests, flexible input, mini-DSLs, and 
+a fast(ish) compile/run cycle.
+
