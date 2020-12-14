@@ -250,3 +250,21 @@ been missing in Rust. The language of Rust does mean you do need some level of c
 times. The interactive environment is hard to replace, but in practice we end up trying to work around with tests, flexible input, mini-DSLs, and 
 a fast(ish) compile/run cycle.
 
+# Day 14
+
+Surprisingly I don't have much to say about todays! I did enjoy it, but it felt like a stay calm, implement whats been described, and everything
+will be fine. No major tricks to the implementation.
+
+* I would say it's probably one of the harder puzzle descriptions to understand. It's not the most complicated procedure needing to be 
+modelled, but it is complicated to explain in plain english. You could describe it more mathematically I guess, at the risk of completely
+bemusing those without a maths-y background, making the solution more obvious, and less interesting. Generally I enjoy the flavour text, and
+think Eric does a great job of describing complicated problems in an interesting way. (I'm not a speed coder, so certainly don't begrudge
+the minutes spent reading the problem description - it's a valuable skill anyway!)
+
+* Probably one of those days when I feel my lack of understanding the std toolkit of my language more completely. I could likely be a 
+lot cleaner in my code if I used idiomatic bit operations. I *have* since seen some examples on Reddit using mask fields in interesting
+ways (a set/reset and floating field), but I'm not going to change my code at this point. (There aren't significant performance gains,
+and I don't think the existing code is too ugly.)
+
+
+not a speed coder, so don't 
