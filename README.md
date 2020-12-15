@@ -266,5 +266,20 @@ lot cleaner in my code if I used idiomatic bit operations. I *have* since seen s
 ways (a set/reset and floating field), but I'm not going to change my code at this point. (There aren't significant performance gains,
 and I don't think the existing code is too ugly.)
 
+# Day 15
 
-not a speed coder, so don't 
+An interesting day this one, as depending on the implementation this is either fairly easy or frustratingly hard (especially part 2).
+I wouldn't be surprised if this is one of those that sees a divide between regular coders and less experienced coders. For my part, I
+automatically reached for a hash to store my *last seen* information. Instincts say I am *not* going to want to walk back through the 
+list every time to find my last usage. Again - don't lose your head on the fine details. But, implemented this way you find that both parts
+complete in reasonable time with no changes. (Approx. 3 seconds for part 2 on my test.)
+I'd already coded the limit of the sequence of the parameter, so the hardest change for part 2 was making sure that I counted the zeroes correctly!
+
+Out of interest tried variations using an array rather than a hash set. (Got me down to ~1s for the expected memory cost.) And then using unsigned
+32 bit ints wherever possible. (Improved my memory, down to reliably sub 1s.) But not much beyond that - no significant order of magnitude 
+improvements, which is as expected. Numberphile do have a video on the sequence (labelled the *Don't Know* sequence) which I'll look into later.
+I'm sure they've already had plenty of hits today!
+
+
+
+
