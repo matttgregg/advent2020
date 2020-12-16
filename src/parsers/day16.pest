@@ -1,0 +1,16 @@
+file = { SOI ~ data ~ (NEWLINE+ ~ data)* ~ NEWLINE* ~ EOI }
+data = _{ yourstag | nearbytag | field | ticket}
+
+field = { fieldname ~ ":" ~ range ~ ( "or" ~ range )* }
+fieldname = { (!(":") ~ ANY)+ }
+range = { rangemin ~ "-" ~ rangemax }
+rangemin = @{ ASCII_DIGIT+ }
+rangemax = @{ ASCII_DIGIT+ }
+
+yourstag = { "your ticket:" }
+nearbytag = { "nearby tickets:" }
+
+ticket = { fieldval ~ ( "," ~ fieldval )+ }
+fieldval = { ASCII_DIGIT+ }
+
+WHITESPACE = _{ " " }
