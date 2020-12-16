@@ -145,10 +145,15 @@ fn parse_tickets(data: &str) {
     println!("My ticket is {:?}", my_ticket);
 
     let mut error_rate = 0;
+    let mut failed_tickets = 0;
     for ticket in tickets {
-        error_rate += ticket.error_rate(&rules);
+        let ticket_err = ticket.error_rate(&rules);
+        error_rate += ticket_err;
+        if ticket_err > 0 {
+            failed_tickets += 1;
+        }
     }
-    println!("Total error rate is: {}", error_rate);
+    println!("Total error rate from {} bad tickets is: {}", failed_tickets, error_rate);
 }
 
 
