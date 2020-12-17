@@ -280,6 +280,24 @@ Out of interest tried variations using an array rather than a hash set. (Got me 
 improvements, which is as expected. Numberphile do have a video on the sequence (labelled the *Don't Know* sequence) which I'll look into later.
 I'm sure they've already had plenty of hits today!
 
+# Day 16
+
+This was an interesting one, and probably my messiest solution so far. Messy in terms of everything works fine, but it's not cleanly 
+refactored, not particularly generic.
+
+The first part is an implement the rules type problem, just stay calm, implement as described. So far so good.
+
+The second bit, ended up with a bit of a debug session. It was a little too easy to use your first part (error sum per ticket) to filter
+out invalid tickets - except it's not *quite* the same. Zeroes can be invalid values, so there can be tickets which are invalid, but have
+a zero error sum. D'oh. It's quite instructive to go through the debugging process however, so not super frustrating.
+It appears that some people on line were complaining that it wasn't obvious enough how to deduce the rule to field mappings. On the one hand, 
+yes, it's true, it was necessary to decide on a strategy. This wasn't a 'implement algorithm X' problem. On the other hand - it makes it
+interesting! And we are at day 16 now, so a bit of extended mental effort seems reasonable.
+
+# Day 17
+
+I wasn't expecting this one to come back, but it's nice to see - 3D game of life! Fully expecting a riot of visualizations for this.
+
 
 
 
