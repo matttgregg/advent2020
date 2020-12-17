@@ -1,7 +1,7 @@
 use pest::Parser;
 use pest_derive::Parser;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::time::SystemTime;
 
 use advent2020::{fmt_bright, print_day, print_duration};
@@ -10,28 +10,15 @@ fn data() -> &'static str {
     include_str!("../data/data16.txt")
 }
 
-fn data_small() -> &'static str {
-    include_str!("../data/data16_small.txt")
-}
-
-fn data_small2() -> &'static str {
-    include_str!("../data/data16_small2.txt")
-}
-
 pub fn run() {
     print_day(16);
 
     let start = SystemTime::now();
-    println!("For {} data set.", fmt_bright(&"small"));
-    parse_tickets(data_small());
-    println!("For {} data set.", fmt_bright(&"small2"));
-    parse_tickets(data_small2());
-    println!("For {} data set.", fmt_bright(&"full"));
-    parse_tickets(data());
 
-    // Let's do this...
+    let (res1, res2) = parse_tickets(data());
 
     let timed = SystemTime::now().duration_since(start).unwrap();
+    println!("Error rate across all tickets is {}, my departure product is {} .", fmt_bright(&res1), fmt_bright(&res2));
     print_duration(timed);
 }
 
@@ -96,7 +83,7 @@ impl TicketRule {
     }
 }
 
-fn parse_tickets(data: &str) {
+fn import_tickets(data: &str) -> (Ticket, Vec<Ticket>, Vec<TicketRule>) {
     let file = DParser::parse(Rule::file, data)
         .expect("unsuccesful parse")
         .next()
@@ -154,23 +141,23 @@ fn parse_tickets(data: &str) {
         }
     }
 
-    println!("Read {} rules", rules.len());
-    println!("Read {} tickets.", tickets.len());
-    println!("My ticket is {:?}", &my_ticket);
+    (my_ticket, tickets, rules)
+}
+
+fn parse_tickets(data: &str) -> (u64, u64) {
+
+    let (my_ticket, tickets, rules) = import_tickets(data);
 
     let mut error_rate = 0;
-    let mut failed_tickets = 0;
     let mut good_tickets = vec![];
     for ticket in tickets {
         if let Some(ticket_err) = ticket.error_rate(&rules) {
-            failed_tickets += 1;
             error_rate += ticket_err;
         } else {
             good_tickets.push(ticket);
         }
     }
     let field_count = my_ticket.values.len();
-    println!("Total error rate from {} bad tickets is: {}", failed_tickets, error_rate);
 
     let mut fields = HashMap::new();
     let mut can_be: HashMap<&String, Vec<usize>> = HashMap::new();
@@ -192,9 +179,6 @@ fn parse_tickets(data: &str) {
             let mut can_match = true;
             for val in &all_values {
                 if !rule.fits_any(*val) {
-                    if i == 4 {
-                        println!("Index 4 value: {} does not match rule {}", val, rule.name);
-                    }
                     can_match = false;
                     break;
                 }
@@ -207,16 +191,8 @@ fn parse_tickets(data: &str) {
         fields.insert(i, maybes);
     }
 
-    for (k,v) in  fields {
-        println!("First pass guesses: {} ->  {:?}", k, v);
-    }
-
-    for (k, v) in &can_be {
-        println!("Field {} could be in {:?}", k, v);
-    }
-
     let mut matched = HashMap::new();
-    let mut matched_indices = HashSet::new();
+    let mut matched_indices = HashMap::new();
     // Now we loop, finding uniquely sepcified values.
     loop {
         let mut updates = 0;
@@ -230,19 +206,16 @@ fn parse_tickets(data: &str) {
             // What *could* this field be?
             let mut possibilities = vec![];
             for p in field_possibilities {
-                if !matched_indices.contains(p) {
+                if !matched_indices.contains_key(p) {
                     possibilities.push(*p);
                 }
             }
             // If there's exactly one possibility, use it!
             if possibilities.len() == 1 {
                 let found = possibilities.get(0).unwrap();
-                matched_indices.insert(*found);
+                matched_indices.insert(*found, field_name);
                 matched.insert(field_name, *found);
-                println!("Field {} is {}", found, field_name);
                 updates += 1;
-            } else {
-               // println!("Unsure on {} ? {:?}", field_name, possibilities);
             }
         }
         if updates == 0 {
@@ -253,15 +226,14 @@ fn parse_tickets(data: &str) {
 
     let mut departure_product = 1;
     for (k, v) in matched {
-        println!("{} -> {}", v, k);
         if k.starts_with("departure") {
             let val = my_ticket.values.get(v).unwrap();
             departure_product *= val;
-            //println!("Grabbing field : {}", k);
+            println!("Field {} -> {}", v, k);
         }
     }
-    println!("Departure product: {}", departure_product);
-    
+
+    (error_rate, departure_product)
 }
 
 
@@ -274,5 +246,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_all() {}
+    fn test_small() {
+        let data_small = include_str!("../data/data16_small.txt");
+        let data_small2 = include_str!("../data/data16_small2.txt");
+        assert_eq!((71,1), parse_tickets(&data_small));
+        assert_eq!((0,1), parse_tickets(&data_small2));
+    }
+
+    #[test]
+    fn test_all() {
+        assert_eq!((27850, 491924517533), parse_tickets(data()));
+    }
 }
