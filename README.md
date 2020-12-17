@@ -298,6 +298,25 @@ interesting! And we are at day 16 now, so a bit of extended mental effort seems 
 
 I wasn't expecting this one to come back, but it's nice to see - 3D game of life! Fully expecting a riot of visualizations for this.
 
+* I attacked it in a reverse fashion to the seating problem. I heavily invested in a structure to represent to cube array and handle
+flattening a 3/4D coordinate to/from a single index, and for accurately acquiring lists of neighbour cells. As a result it ran almost
+perfectly first time, and very little time spent looking for errors today.
 
+* Used an array first rather than a hashset/map. Not sure how significant a difference that is.
 
+* Hard coded three dimensions. For part 2 added the fourth dimension, again hard coded. Was still able to run the part1 solution
+as a slice through the 4d space. (My space isn't infinite, but I do presize intelligently so that edges aren't significant.)
 
+* I *didn't* bother trying to code generic dimensions. (Although I don't think it would be significantly more difficult - mostly busy
+work.) Spatial dimensions are one of those things which are almost 100% limited except for very special casees. Similarly, my neighbour
+sets were via pre-computed arrays. Works fine but glad we're not pushing to five dimensions.
+
+* Something I note - variable names. Particularly when in the weeds, more and more helpful to use desciptive variable names rather than
+i,j,k or k,v etc.
+
+* There *are* visualizations - but at the same time it's really hard to visual pleasantly. They're pleasant but quite hard to
+interpret. <Sigh> Four dimensions.
+
+* My release run for the month is now up to 2.2s thanks to today being ~1.2s. (Debug run is at 34s in total.)
+
+* A Redditor pointed out that John Conway died this year, so it's nice to see something of a tribute here.
