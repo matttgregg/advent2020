@@ -1,5 +1,6 @@
 use std::time::SystemTime;
 use std::convert::TryInto;
+use std::collections::HashSet;
 
 use advent2020::{fmt_bright, print_day, print_duration};
 
@@ -30,11 +31,25 @@ fn run_cube(init: &str, iters: usize, with_w: bool) -> u32 {
     let mut cube_array = CubeArray::new((-ww, -offset.unwrap(), -offset.unwrap(), -wz), (ww, sizex, sizex, wz));
 
     // Initialize the array.
+    let mut live_cubes = vec![];
+    let mut seen: HashSet<usize> = HashSet::new();
     for (x, line) in init.lines().enumerate() {
         for (y, ch) in line.chars().enumerate() {
             let ix = cube_array.config.flatten(0, x.try_into().unwrap(), y.try_into().unwrap(), 0);
             cube_array.cubes[ix] = match ch {
-                '#' => 1,
+                '#' => {
+                    if !seen.contains(&ix) {
+                        seen.insert(ix);
+                        live_cubes.push(ix);
+                    }
+                    for ixn in cube_array.config.neigbours(ix) {
+                        if !seen.contains(&ixn) {
+                            seen.insert(ixn);
+                            live_cubes.push(ixn);
+                        }
+                    }
+                    1   
+                }
                 _ => 0,
             };
         }
@@ -42,8 +57,8 @@ fn run_cube(init: &str, iters: usize, with_w: bool) -> u32 {
 
     // Print & count the cube:
     let mut active = 0;
-    for c in &cube_array.cubes {
-        if *c == 1 {
+    for ix in &live_cubes {
+        if cube_array.cubes[*ix] == 1 {
             active += 1;
         }
     }
@@ -53,19 +68,48 @@ fn run_cube(init: &str, iters: usize, with_w: bool) -> u32 {
         let mut set_zero = vec![];
         let mut set_one = vec![];
         println!("[{}] {} active.", iteration, active);
+        let mut next_live_cubes = vec![];
+        let mut seen: HashSet<usize> = HashSet::new();
 
         // Go through each cube
-        for (ix, c) in cube_array.cubes.iter().enumerate() {
+        for ix in &live_cubes {
+            let c = cube_array.cubes[*ix];
             let mut active_neighbours = 0;
-            for n in cube_array.config.neigbours(ix) {
+            for n in cube_array.config.neigbours(*ix) {
                 active_neighbours += cube_array.cubes[n];
             }
-            if *c == 1 && (active_neighbours < 2 || active_neighbours > 3) {
-                set_zero.push(ix);
-            } else if *c == 0 && active_neighbours == 3 {
-                set_one.push(ix);
+            if c == 1 {
+                if (2..=3).contains(&active_neighbours) {
+                    if !seen.contains(ix) {
+                        seen.insert(*ix);
+                        next_live_cubes.push(*ix);
+                    }
+                    for inx in &cube_array.config.neigbours(*ix) {
+                        if !seen.contains(inx) {
+                            seen.insert(*inx);
+                            next_live_cubes.push(*inx);
+                        }
+                    }
+                } else {
+                    set_zero.push(*ix);
+                }
+            } else if c == 0 && active_neighbours == 3 {
+                set_one.push(*ix);
+                if !seen.contains(ix) {
+                    seen.insert(*ix);
+                    next_live_cubes.push(*ix);
+                }
+                for inx in &cube_array.config.neigbours(*ix) {
+                    if !seen.contains(inx) {
+                        seen.insert(*inx);
+                        next_live_cubes.push(*inx);
+                    }
+                }
             }
         }
+        
+        live_cubes = next_live_cubes;
+        seen.clear();
 
         // Now update.
         for ix in set_zero {
