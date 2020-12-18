@@ -318,5 +318,8 @@ i,j,k or k,v etc.
 interpret. <Sigh> Four dimensions.
 
 * My release run for the month is now up to 2.2s thanks to today being ~1.2s. (Debug run is at 34s in total.)
+** Update. Ok, I said I wouldn't optimize much, but had the idea of really aggressively only working on cells which can change. i.e. every
+active cube, plus it's neighbours. It feels quite clunky (a lot of code to check we don't double count) but leads to a 10x speed up. Gives the
+impression that a set based approach might be both significantly simpler and also performant.
 
 * A Redditor pointed out that John Conway died this year, so it's nice to see something of a tribute here.
