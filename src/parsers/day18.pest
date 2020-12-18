@@ -1,0 +1,13 @@
+file = { SOI ~ calc ~ (NEWLINE+ ~ calc)* ~ NEWLINE* ~ EOI }
+
+calc = { value ~ ( op ~ value )* }
+
+value = _{ num | bracketed }
+num = @{ (ASCII_DIGIT+ | ("-" ~ ASCII_DIGIT+)) }
+bracketed = _{ "(" ~ calc ~ ")" }
+
+op = _{ plus | times } 
+plus = { "+" }
+times = { "*" }
+
+WHITESPACE = _{ " " }
