@@ -323,3 +323,25 @@ active cube, plus it's neighbours. It feels quite clunky (a lot of code to check
 impression that a set based approach might be both significantly simpler and also performant.
 
 * A Redditor pointed out that John Conway died this year, so it's nice to see something of a tribute here.
+
+# Day 18
+
+A pleasant day, although vastly helped by using high powered libraries (i.e. Pest for parsing) and a fairly restricted problem.
+
+* Because I used Pest for parsing, I never really had problems with the bracketing. My parser always returned bracketed expressions wrapped
+for me, so was able to handle with trivial recursion.
+
+* Because of part 1, I did a simple left to right parser (except for brackets), rather than building a tree.
+
+* For part 2, I ended up implementing a parse to reduce all the additions, and then handle the remaining multiplations. This was certainly
+coding for the current problem, not coding for extension. I'd definitely be running into problems if I had many more operators, or if 
+the operatore weren't associative, as they are here. I'm going to look into some of the background literature on the subject.
+
+* I decided Rust was not a suitable language for some of the more _abusive_ techniques, live code evaluation, etc. I've seen some on Reddit now,
+for example Ruby. I admire their unholy existence. (e.g. Redefine +, * to multiple and swap respectively. In you input, swap '+' and '*' symbols.
+Use the standard Ruby parser to evaluate the expression. Laugh maniacally.)
+
+* It's one of those paradoxes that this non-geometric problem can *arguably* produce more useful representations than something like yesterdays.
+There's a particularly nice one that iteratively visually collapses terms to reduce to a single answer.
+
+So, yes, felt like a gentle Friday, but know that's largely depending on the initial approach. Certainly some pits that I managed to step around.
