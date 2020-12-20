@@ -38,3 +38,11 @@ pub fn print_duration(d: time::Duration) {
 pub fn fmt_bright<T: std::fmt::Display>(t: &T) -> String {
     format!("{}{}{}", color::Fg(color::LightWhite), t, color::Fg(color::Reset))
 }
+
+pub fn fmt_red<T: std::fmt::Display>(t: &T) -> String {
+    format!("{}{}{}", color::Fg(color::Red), t, color::Fg(color::Reset))
+}
+
+pub fn fmt_green<T: std::fmt::Display>(t: &T) -> String {
+    format!("{}{}{}", color::Fg(color::Green), t, color::Fg(color::Reset))
+}

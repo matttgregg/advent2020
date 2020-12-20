@@ -1,0 +1,14 @@
+file = { SOI ~ ruleordatum ~ (NEWLINE+ ~ ruleordatum)* ~ NEWLINE* ~ EOI }
+
+ruleordatum = _{ rule | datum }
+
+rule = { index ~ ":" ~ seq ~ ( "|" ~ seq)* } 
+index = { ASCII_DIGIT+ }
+seq = { (quoted_literal | sub)+ }
+sub = ${ ASCII_DIGIT+ }
+quoted_literal = _{ "\"" ~ literal ~ "\"" } 
+literal = $ { ASCII_ALPHA }
+
+datum = ${ ASCII_ALPHA+ }
+
+WHITESPACE = _{ " " }
