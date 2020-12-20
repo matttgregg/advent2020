@@ -1,12 +1,10 @@
 use pest::Parser;
 use pest_derive::Parser;
 
-use termion::cursor;
-
 use std::collections::HashMap;
 use std::time::SystemTime;
 
-use advent2020::{fmt_bright, fmt_red, fmt_green, print_day, print_duration};
+use advent2020::{fmt_bright, print_day, print_duration};
 
 fn data() -> &'static str {
     include_str!("../data/data19.txt")
@@ -17,24 +15,15 @@ pub fn run() {
 
     let start = SystemTime::now();
 
-    let data_small = "0: 4 1 5
-1: 2 3 | 3 2
-2: 4 4 | 5 5
-3: 4 5 | 5 4
-4: \"a\"
-5: \"b\"
-
-ababbb
-bababa
-abbbab
-aaabbb
-aaaabbb";
-    parse(&data_small);
-    parse(data());
+    let (match_count, extended_match_count) = parse(data());
 
     // Let's do this...
 
     let timed = SystemTime::now().duration_since(start).unwrap();
+
+    println!("Found {} matches.", fmt_bright(&match_count));
+    println!("Found {} extended matches.", fmt_bright(&extended_match_count));
+    
     print_duration(timed);
 }
 
@@ -65,11 +54,8 @@ impl Rules {
         self.rules.insert(index, rule);
     }
     
-    fn matches(&self, index: usize, text: &str, patched: bool, trying42: usize, trying11: usize) -> Option<(String, String)> {
-        if !patched {
-            self.inner_matches(index, text, patched, trying42, trying11)
-        }
-        else if index == 8 {
+    fn matches(&self, index: usize, text: &str, trying42: usize, trying11: usize) -> Option<(String, String)> {
+        if index == 8 {
             // We greedily match rule 42
             let mut matched = String::from("");
             let mut remainder = String::from(text);
@@ -77,7 +63,7 @@ impl Rules {
             loop {
                 if ncount >= trying42 {
                     break;
-                } else if let Some((new_match, new_remainder)) = self.inner_matches(42, &remainder, patched, trying42, trying11) {
+                } else if let Some((new_match, new_remainder)) = self.inner_matches(42, &remainder,  trying42, trying11) {
                     ncount += 1;
                     matched.push_str(&new_match);
                     remainder = new_remainder;
@@ -100,7 +86,7 @@ impl Rules {
             loop {
                 if n >= trying11 {
                     break;
-                } else if let Some((new_match, new_remainder)) = self.inner_matches(42, &remainder, patched, trying42, trying11) {
+                } else if let Some((new_match, new_remainder)) = self.inner_matches(42, &remainder,  trying42, trying11) {
                     matched.push_str(&new_match);
                     remainder = new_remainder;
                     n += 1;
@@ -115,7 +101,7 @@ impl Rules {
 
             // Now, we *must* match n instances of 31
             for _ in 0..n {
-                if let Some((new_match, new_remainder)) = self.inner_matches(31, &remainder, patched, trying42, trying11) {
+                if let Some((new_match, new_remainder)) = self.inner_matches(31, &remainder,  trying42, trying11) {
                     matched.push_str(&new_match);
                     remainder = new_remainder;
                 } else {
@@ -124,11 +110,11 @@ impl Rules {
             }
             Some((matched, remainder))
         } else {
-                self.inner_matches(index, text, patched, trying42, trying11)
+                self.inner_matches(index, text,  trying42, trying11)
         }
     }
 
-    fn inner_matches(&self, index: usize, text: &str, patched: bool, trying42: usize, trying11: usize) -> Option<(String, String)> {
+    fn inner_matches(&self, index: usize, text: &str, trying42: usize, trying11: usize) -> Option<(String, String)> {
         if let Some(r) = self.rules.get(&index) {
             for option in &r.options {
                 // We attempt to match each option in turn.
@@ -153,7 +139,7 @@ impl Rules {
                         },
                         RuleFragment::Ref(i) => {
                             // Attempt to match against the sub expression.
-                            if let Some((submatch, subremainder)) = self.matches(*i, &remainder, patched, trying42, trying11) {
+                            if let Some((submatch, subremainder)) = self.matches(*i, &remainder,  trying42, trying11) {
                                 matched.push_str(&submatch);
                                 remainder = subremainder;
                             } else {
@@ -176,7 +162,7 @@ impl Rules {
 
 
 
-pub fn parse(transmission: &str) {
+pub fn parse(transmission: &str) -> (usize, usize) {
     let file = DParser::parse(Rule::file, transmission)
         .expect("unsuccesful parse")
         .next()
@@ -229,18 +215,15 @@ pub fn parse(transmission: &str) {
         };
     };
 
+    println!("Read {} rules, and {} data.", rules.rules.len(), data.len());
 
-    println!("Read rules: {:?}", rules);
     let mut match_count = 0;
     let mut extended_match_count = 0;
     for datum in data {
-        if let Some((matched, remainder)) = rules.matches(0, datum, false, 1, 1) {
-            println!("{}{}", fmt_green(&matched), fmt_red(&remainder));
+        if let Some((_matched, remainder)) = rules.matches(0, datum, 1, 1) {
             if remainder.is_empty() {
                 match_count += 1;
             }
-        } else {
-            println!("{:50}", fmt_red(&datum));
         }
         
         let mut full_match = false;
@@ -254,8 +237,7 @@ pub fn parse(transmission: &str) {
                     break;
                 }
 
-                if let Some((matched, remainder)) = rules.matches(0, datum, true, trying42, trying11) {
-                    println!("{}{}", fmt_green(&matched.to_ascii_uppercase()), fmt_red(&remainder.to_ascii_uppercase()));
+                if let Some((_matched, remainder)) = rules.matches(0, datum, trying42, trying11) {
                     if remainder.is_empty() {
                         extended_match_count += 1;
                         full_match = true;
@@ -263,13 +245,9 @@ pub fn parse(transmission: &str) {
                 }
             }
         }
-        if !full_match {
-            println!("{}", fmt_red(&datum.to_ascii_uppercase()));
-        }
     }
 
-    println!("Found {} matches.", fmt_bright(&match_count));
-    println!("Found {} extended matches.", fmt_bright(&extended_match_count));
+    (match_count, extended_match_count)
 } 
 
 #[derive(Parser)]
@@ -281,5 +259,30 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_all() {}
+    fn test_small1() {
+        let data_small = "0: 4 1 5
+1: 2 3 | 3 2
+2: 4 4 | 5 5
+3: 4 5 | 5 4
+4: \"a\"
+5: \"b\"
+
+ababbb
+bababa
+abbbab
+aaabbb
+aaaabbb";
+        assert_eq!((2,2), parse(&data_small));
+    }
+
+    #[test]
+    fn test_small2() {
+        let data_small = include_str!("../data/data19_small2.txt");
+        assert_eq!((3, 12), parse(&data_small));
+    }
+
+    #[test]
+    fn test_all() {
+        assert_eq!((120, 350), parse(data()));
+    }
 }
