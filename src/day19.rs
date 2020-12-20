@@ -65,9 +65,9 @@ impl Rules {
         self.rules.insert(index, rule);
     }
     
-    fn matches(&self, index: usize, text: &str, patched: bool, trying: usize) -> Option<(String, String)> {
+    fn matches(&self, index: usize, text: &str, patched: bool, trying42: usize, trying11: usize) -> Option<(String, String)> {
         if !patched {
-            self.inner_matches(index, text, patched, trying)
+            self.inner_matches(index, text, patched, trying42, trying11)
         }
         else if index == 8 {
             // We greedily match rule 42
@@ -75,9 +75,9 @@ impl Rules {
             let mut remainder = String::from(text);
             let mut ncount = 0;
             loop {
-                if ncount >= trying {
-                    break
-                } else if let Some((new_match, new_remainder)) = self.inner_matches(42, &remainder, patched, trying) {
+                if ncount >= trying42 {
+                    break;
+                } else if let Some((new_match, new_remainder)) = self.inner_matches(42, &remainder, patched, trying42, trying11) {
                     ncount += 1;
                     matched.push_str(&new_match);
                     remainder = new_remainder;
@@ -85,14 +85,12 @@ impl Rules {
                     break;
                 }
             }
-            println!("--MATCHED 42x{}", ncount);
 
             if matched.is_empty() {
                 None
             } else {
                 Some((matched, remainder))
             }
-            /*
         } else if index == 11 {
             // Can look like 42{n} 31{n} where n >= 1;
             // Collect 42s
@@ -100,7 +98,9 @@ impl Rules {
             let mut remainder = String::from(text);
             let mut n = 0;
             loop {
-                if let Some((new_match, new_remainder)) = self.inner_matches(42, &remainder, patched) {
+                if n >= trying11 {
+                    break;
+                } else if let Some((new_match, new_remainder)) = self.inner_matches(42, &remainder, patched, trying42, trying11) {
                     matched.push_str(&new_match);
                     remainder = new_remainder;
                     n += 1;
@@ -115,7 +115,7 @@ impl Rules {
 
             // Now, we *must* match n instances of 31
             for _ in 0..n {
-                if let Some((new_match, new_remainder)) = self.inner_matches(31, &remainder, patched) {
+                if let Some((new_match, new_remainder)) = self.inner_matches(31, &remainder, patched, trying42, trying11) {
                     matched.push_str(&new_match);
                     remainder = new_remainder;
                 } else {
@@ -123,20 +123,12 @@ impl Rules {
                 }
             }
             Some((matched, remainder))
-            */
         } else {
-            let mut to_try = trying;
-            loop {
-                let res = self.inner_matches(index, text, patched, trying);
-                if to_try > 2 || res != None {
-                    break res
-                }
-                to_try += 1;
-            }
+                self.inner_matches(index, text, patched, trying42, trying11)
         }
     }
 
-    fn inner_matches(&self, index: usize, text: &str, patched: bool, trying: usize) -> Option<(String, String)> {
+    fn inner_matches(&self, index: usize, text: &str, patched: bool, trying42: usize, trying11: usize) -> Option<(String, String)> {
         if let Some(r) = self.rules.get(&index) {
             for option in &r.options {
                 // We attempt to match each option in turn.
@@ -161,7 +153,7 @@ impl Rules {
                         },
                         RuleFragment::Ref(i) => {
                             // Attempt to match against the sub expression.
-                            if let Some((submatch, subremainder)) = self.matches(*i, &remainder, patched, trying) {
+                            if let Some((submatch, subremainder)) = self.matches(*i, &remainder, patched, trying42, trying11) {
                                 matched.push_str(&submatch);
                                 remainder = subremainder;
                             } else {
@@ -242,7 +234,7 @@ pub fn parse(transmission: &str) {
     let mut match_count = 0;
     let mut extended_match_count = 0;
     for datum in data {
-        if let Some((matched, remainder)) = rules.matches(0, datum, false, 1) {
+        if let Some((matched, remainder)) = rules.matches(0, datum, false, 1, 1) {
             println!("{}{}", fmt_green(&matched), fmt_red(&remainder));
             if remainder.is_empty() {
                 match_count += 1;
@@ -251,15 +243,31 @@ pub fn parse(transmission: &str) {
             println!("{:50}", fmt_red(&datum));
         }
         
-        if let Some((matched, remainder)) = rules.matches(0, datum, true, 1) {
-            println!("{}{}", fmt_green(&matched.to_ascii_uppercase()), fmt_red(&remainder.to_ascii_uppercase()));
-            if remainder.is_empty() {
-                extended_match_count += 1;
+        let mut full_match = false;
+        for trying42 in 1..10 {
+            if full_match {
+                break;
             }
-        } else {
-            println!("{:50}", fmt_red(&datum.to_ascii_uppercase()));
+
+            for trying11 in 1..10 {
+                if full_match {
+                    break;
+                }
+
+                if let Some((matched, remainder)) = rules.matches(0, datum, true, trying42, trying11) {
+                    println!("{}{}", fmt_green(&matched.to_ascii_uppercase()), fmt_red(&remainder.to_ascii_uppercase()));
+                    if remainder.is_empty() {
+                        extended_match_count += 1;
+                        full_match = true;
+                    }
+                }
+            }
+        }
+        if !full_match {
+            println!("{}", fmt_red(&datum.to_ascii_uppercase()));
         }
     }
+
     println!("Found {} matches.", fmt_bright(&match_count));
     println!("Found {} extended matches.", fmt_bright(&extended_match_count));
 } 
