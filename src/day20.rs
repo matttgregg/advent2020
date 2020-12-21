@@ -1,5 +1,7 @@
+#![allow(clippy::redundant_closure)]
 use std::time::SystemTime;
 use std::collections::HashMap;
+use std::convert::TryInto;
 
 use advent2020::{fmt_bright, print_day, print_duration};
 
@@ -21,7 +23,7 @@ pub fn run() {
     print_duration(timed);
 }
 
-fn parse_tiles(data: &str) -> (u64, u64) {
+fn tiles_from_file(data: &str) -> Vec<Tile> {
     let mut tiles = vec![];
     let mut scan = vec![];
     let mut tile_index = 0;
@@ -49,20 +51,28 @@ fn parse_tiles(data: &str) -> (u64, u64) {
             }
         }
     }
+    tiles
+}
 
-    println!("Read {} tiles:", tiles.len());
-
+fn map_tiles(tiles: &[Tile]) -> HashMap<u16, Vec<(u16, u8)>> {
     // Store the key/edge/orientation triples for every number.
-    let mut lookup: HashMap<u16, Vec<(u16, u8, bool)>> = HashMap::new();
-    for tile in &tiles {
+    let mut lookup: HashMap<u16, Vec<(u16, u8)>> = HashMap::new();
+    for tile in tiles {
         for e in 0..4 {
             let k_natural = tile.key(e, 0);
-            lookup.entry(k_natural).or_insert_with(|| vec![]).push((tile.index, e, false));
+            lookup.entry(k_natural).or_insert_with(|| vec![]).push((tile.index, e));
 
             let k_twisted = tile.key(e, 2);
-            lookup.entry(k_twisted).or_insert_with(|| vec![]).push((tile.index, e, true));
+            lookup.entry(k_twisted).or_insert_with(|| vec![]).push((tile.index, e));
         }
     }
+    lookup
+}
+
+fn parse_tiles(data: &str) -> (u64, u64) {
+    let tiles = tiles_from_file(data);
+    println!("Read {} tiles:", tiles.len());
+    let lookup = map_tiles(&tiles);
 
     let mut corners: Vec<u64> = vec![];
     let mut oriented_corners: Vec<Oriented> = vec![];
@@ -87,7 +97,7 @@ fn parse_tiles(data: &str) -> (u64, u64) {
         }
         
         if matching == 2 {
-            corners.push(tile.index as u64);
+            corners.push(tile.index.try_into().unwrap());
 
             let orientation = match matched_edges {
                 [0, 1, 1, 0] => 0,
@@ -105,73 +115,31 @@ fn parse_tiles(data: &str) -> (u64, u64) {
 
     // ! Lets build the image array!
     let mut init: Option<&Oriented> = None;
-    let mut anchor_tile = oriented_corners.iter().next().unwrap().copy();
+    let mut anchor_tile = oriented_corners.get(0).unwrap().copy();
     let mut combined: Vec<Vec<Oriented>> = vec![];
     // Loop on rows.
     loop {
         // Find the first tile in the row.
         if init.is_none() {
             // Pull first from one of the corners.
-            let first_corner = oriented_corners.iter().next().unwrap();
+            let first_corner = oriented_corners.get(0).unwrap();
             init = Some(first_corner);
-        } else if let Some(matches) = lookup.get(&anchor_tile.edge_key(2)) {
-            let current = anchor_tile.copy();
-                if let Some((t_index,t_edge, _)) = matches.iter().filter(|(t_index, _, _)| *t_index != current.tile.index).next() {
-                    // We've got the tile and edge.
-                    let tile = tile_map.get(t_index).unwrap();
-                    // Find the orientation and flip.
-                    anchor_tile = Oriented::new((t_edge + 1) % 4, tile);
-                    if anchor_tile.edge_key(0) != current.edge_key(2) {
-                        for orientation in 0..4 {
-                            anchor_tile = Oriented::new(orientation, tile);
-                            if anchor_tile.edge_key(0) == current.edge_key(2) {
-                                break
-                            }
-                            anchor_tile = anchor_tile.flipped();
-                            if anchor_tile.edge_key(0) == current.edge_key(2) {
-                                break
-                            }
-                        }
-                    }
+
+        }  else if let Some(next_below) = match_tile_to(&lookup, &tile_map, anchor_tile.tile.index, anchor_tile.edge_key(2), 0) { 
+                    anchor_tile = next_below;
                     init = Some(&anchor_tile);
-                } else {
-                    // We do not have a matching tile.
-                    break;
-                }
+        } else {
+            // We do not have a matching tile.
+            break;
         }
 
         let mut current = Oriented::new(anchor_tile.orientation, &anchor_tile.tile);
         let mut row = vec![Oriented::new(anchor_tile.orientation, &anchor_tile.tile)];
 
-        loop {
-            // Loop within the row.
-            if let Some(matches) = lookup.get(&current.edge_key(1)) {
-                if let Some((t_index,t_edge, _)) = matches.iter().filter(|(t_index, _, _)| *t_index != current.tile.index).next() {
-                    // We've got the tile and edge.
-                    let tile = tile_map.get(t_index).unwrap();
-                    // Find the orientation and flip.
-                    let mut next_oriented = Oriented::new((t_edge + 1) % 4, tile);
-                    if next_oriented.edge_key(3) != current.edge_key(1) {
-                        for orientation in 0..4 {
-                            next_oriented = Oriented::new(orientation, tile);
-                            if next_oriented.edge_key(3) == current.edge_key(1) {
-                                break
-                            }
-                            next_oriented = Oriented::new(orientation, &tile.flipped());
-                            if next_oriented.edge_key(3) == current.edge_key(1) {
-                                break
-                            }
-                        }
-                    }
-                    current = next_oriented.copy();
-                    row.push(next_oriented);
-                } else {
-                    // We do not have a matching tile.
-                    break;
-                }
-            } else {
-                break;
-            }
+        // Work over the row from the left anchor tile.
+        while let Some(next_oriented) = match_tile_to(&lookup, &tile_map, current.tile.index, current.edge_key(1), 3) { 
+            current = next_oriented.copy();
+            row.push(next_oriented);
         }
         combined.push(row);
     }
@@ -194,6 +162,38 @@ fn parse_tiles(data: &str) -> (u64, u64) {
         println!();
     }
 
+    let turbulence = turbulence_for(&chart);
+    (corner_product, turbulence)
+ }
+
+fn match_tile_to(lookup: &HashMap<u16, Vec<(u16, u8)>>, tile_map: &HashMap<u16, &Tile>, from_index: u16, from_key: u16, to_edge: u8)
+                 -> Option<Oriented> {
+    if let Some(matches) = lookup.get(&from_key) {
+        if let Some((t_index, _)) = matches.iter().find(|(t_index, _)| *t_index != from_index) {
+            // We've got the tile and edge.
+            let tile = tile_map.get(t_index).unwrap();
+            let try_first = Oriented::new((to_edge + 3) % 4, tile);
+            if try_first.edge_key(to_edge) == from_key {
+                return Some(try_first);
+            }
+            // Find the orientation and flip.
+            for orientation in 0..4 {
+                let try_tile = Oriented::new(orientation, tile);
+                if try_tile.edge_key(to_edge) == from_key {
+                    return Some(try_tile);
+                }
+                let try_flipped = try_tile.flipped();
+                if try_flipped.edge_key(to_edge) == from_key {
+                    return Some(try_flipped);
+                }
+            }
+        }
+    }
+    None
+    
+}
+
+fn turbulence_for(chart: &[String]) -> u64 {
     let row_count = chart.len();
     let col_count = chart.get(0).unwrap().len();
 
@@ -213,8 +213,8 @@ fn parse_tiles(data: &str) -> (u64, u64) {
 
     let turbulence = hash_count - 15 * monster_count;
     println!("Saw {} waves and {} monsters. Turbulence = {}", hash_count, monster_count, turbulence);
-    (corner_product, turbulence)
- }
+    turbulence
+}
 
 //                   # 
 // #    ##    ##    ###
@@ -324,7 +324,7 @@ impl Tile {
         let mut key = 0;
         for (i, v) in vals.iter().enumerate() {
             if *v > 0 {
-                key += 2_u16.pow(i as u32);
+                key += 2_u16.pow(i.try_into().unwrap());
             }
         }
         key

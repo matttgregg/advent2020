@@ -345,3 +345,41 @@ Use the standard Ruby parser to evaluate the expression. Laugh maniacally.)
 There's a particularly nice one that iteratively visually collapses terms to reduce to a single answer.
 
 So, yes, felt like a gentle Friday, but know that's largely depending on the initial approach. Certainly some pits that I managed to step around.
+
+# Day 19
+
+This was an interesting one - it feels like parsing is a bit of a theme this year.
+
+The first part was not so hard, given an entirely predictable parse. At least I don't have to consider kleene star type patterns I thought...
+
+Then part two. I *really* need to bash through some more parsing texts (I've got one that comes at the start of a modern compiler design
+book - but who wants to spend time wading through parsing methods when wanting to write a parser? I consider myself chastised and will get
+back to it!)
+Unfortunately, I quickly found that a greedy match would not work. (Matching greedily, I suddenly failed to validate any rules!) On the other 
+hand I did discover that I only hit the looping rules once at most, as a result I could do a search trying the different varients of the
+looping rules with too much cost (i.e. try rule 42 with one loop, two loops, ...). The result is not bllindingly fast, but still in milliseconds.
+It's not general - but I don't particularly want to write a general regex parser in a single day.
+
+Definitely one that points to more reading.
+
+# Day 20
+
+This was a cool one. I always enjoy something with a visual element. Two observations made this singificantly easier:
+
+* I realised that edges could be represented as integer values. (i.e. the hash/dot patterns could be interpreted as binary.)
+
+* The problem data was friendly. The matches were all unique, so it was completely deterministic on how to reconstruct the chart from
+any starting point. So no backtracking trials, etc.
+
+There was a lot of busy work, just pulling out the right keys for the different edges, then transformation rules when flipping/rotating. But
+I think I kept it under control, and flexible enough to spit out relevant debug when needed. (I had an annoying bug around printing
+the rows of a tile when in a particular orientation, which took me some time to track down.)
+
+The monster hunting was again entirely deterministic, just a question of coding. (And counting carefully the monster coords!)
+
+I was prepared for handling the various chart flips/rotations to hunt for the monsters, but then lucked out by find monsters in my
+default orientation! (I'd settled in my mind that I'd do this most cleanly by shuffling/flipping my starting corner to get all the combinations
+but it wasn't necessary in the end.)
+
+So - a fairly long day, but a lot going on, and several stages, and interesting algorithms. Maybe my favourite so far.
+
