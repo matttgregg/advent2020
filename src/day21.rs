@@ -1,8 +1,8 @@
 use pest::Parser;
 use pest_derive::Parser;
 
+use std::collections::{HashMap, HashSet};
 use std::time::SystemTime;
-use std::collections::{HashSet, HashMap};
 
 use advent2020::{fmt_bright, print_day, print_duration};
 
@@ -38,8 +38,12 @@ fn parse_foods(data: &str) {
         let mut food = FoodStuff::new();
         for part in line.into_inner() {
             match part.as_rule() {
-                Rule::ingredient => { food.ingredients.insert(part.as_str().to_string()); },
-                Rule::allergen => { food.allergens.insert(part.as_str().to_string()); },
+                Rule::ingredient => {
+                    food.ingredients.insert(part.as_str().to_string());
+                }
+                Rule::allergen => {
+                    food.allergens.insert(part.as_str().to_string());
+                }
                 _ => panic!("Unexpected rule."),
             }
         }
@@ -50,12 +54,16 @@ fn parse_foods(data: &str) {
     let mut all_allergens: HashMap<String, Vec<usize>> = HashMap::new();
     for (i, food) in foods.iter().enumerate() {
         for allergen in &food.allergens {
-            all_allergens.entry(allergen.to_string()).or_insert(vec![]).push(i)
+            all_allergens
+                .entry(allergen.to_string())
+                .or_insert(vec![])
+                .push(i)
         }
     }
 
     println!("Found allergens: {:?}", all_allergens);
     let mut dangerous_foods = HashSet::new();
+    let mut possible_foods = HashMap::new();
 
     // For each allergen, we find the intersection of ingredients that can contain it.
     for (allergen, indexed_foods) in all_allergens {
@@ -65,15 +73,21 @@ fn parse_foods(data: &str) {
             if foods_intersect.is_empty() {
                 foods_intersect = ingredients;
             } else {
-                foods_intersect = foods_intersect.intersection(&ingredients).copied().collect();
+                foods_intersect = foods_intersect
+                    .intersection(&ingredients)
+                    .copied()
+                    .collect();
             }
         }
         println!("Allergen {} must be in {:?}", allergen, foods_intersect);
+        let mut possible = vec![];
         for food in foods_intersect {
             dangerous_foods.insert(food);
+            possible.push(food);
         }
+        possible_foods.insert(allergen, possible);
     }
-    
+
     println!("Found dangerous foods: {:?}", dangerous_foods);
 
     let mut safe_foods = HashSet::new();
@@ -85,10 +99,51 @@ fn parse_foods(data: &str) {
                 safe_uses += 1;
             }
         }
-    } 
+    }
 
     println!("Found safe foods: {:?}", safe_foods);
     println!("Total safe ingredients: {}", safe_uses);
+
+    // Work out the dangerous ingredients.
+    let mut dangerous: HashMap<String, String> = HashMap::new();
+    let mut fixed = HashSet::new();
+
+    loop {
+        let mut count_fixed = 0;
+
+        for (allergen, foods) in &possible_foods {
+            if dangerous.contains_key(allergen) {
+                continue;
+            }
+
+            let mut options = vec![];
+            for f in foods {
+                if !fixed.contains(&f) {
+                    options.push(f);
+                }
+            }
+
+            if options.len() == 1 {
+                let bad_ingredient = options.get(0).unwrap().clone();
+                fixed.insert(bad_ingredient);
+                dangerous.insert(allergen.clone(), bad_ingredient.to_string());
+                println!("{} is in {}", allergen, bad_ingredient);
+                count_fixed += 1;
+            }
+        }
+        if count_fixed == 0 {
+            break;
+        }
+    }
+
+    let mut sorted_danger: Vec<(&String, &String)> = dangerous.iter().collect();
+    sorted_danger.sort_by(|(a, _), (b, _)| a.partial_cmp(b).unwrap());
+    for (allergen, ingredient) in &sorted_danger {
+        println!("{} in {}", allergen, ingredient);
+    }
+    let canonical_ingredients: Vec<_> = sorted_danger.iter().map(|(_, ingredient)| (*ingredient).to_string()).collect();
+    let canonical_list = canonical_ingredients.join(",");
+    println!("Canonical Dangerous Ingredient List (CDIL): {:?}", canonical_list);
 }
 
 #[derive(Debug)]
@@ -99,7 +154,10 @@ struct FoodStuff {
 
 impl FoodStuff {
     fn new() -> Self {
-        FoodStuff{ ingredients:HashSet::new(), allergens: HashSet::new() }
+        FoodStuff {
+            ingredients: HashSet::new(),
+            allergens: HashSet::new(),
+        }
     }
 }
 
