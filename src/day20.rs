@@ -172,10 +172,12 @@ fn parse_tiles(data: &str) {
                         for orientation in 0..4 {
                             next_oriented = Oriented::new(orientation, tile);
                             if next_oriented.edge_key(3) == current.edge_key(1) {
+                                println!("Matched:{}:natural", orientation);
                                 break
                             }
-                            next_oriented = next_oriented.flipped();
+                            next_oriented = Oriented::new(orientation, &tile.flipped());
                             if next_oriented.edge_key(3) == current.edge_key(1) {
+                                println!("Matched:{}:flipped", orientation);
                                 break
                             }
                         }
@@ -205,7 +207,7 @@ fn parse_tiles(data: &str) {
             let mut full_row_chars = String::from("");
             for t in &row {
                 if ri == 0 {
-                    print!(" {} ", t.tile.index);
+                    print!(" {}/{} ", t.tile.index, t.orientation);
                 }
 
                 if ri < 8 {
@@ -316,13 +318,9 @@ impl Oriented {
     }
 
     fn flipped(&self) -> Self {
-        let mut scans = self.tile.scans.to_owned();
-        scans.reverse();
         Self{
             orientation: self.orientation,
-            tile: Tile {
-                index:self.tile.index, scans
-            }
+            tile: self.tile.flipped()
         }
     }
 
@@ -330,8 +328,10 @@ impl Oriented {
         let mut row_bits: Vec<u8> = vec![];
         for i in 0..8 {
             row_bits.push(match self.orientation {
-                0|2 => *self.tile.scans.get(r + 1).unwrap().get(i + 1).unwrap(),
-                1|3 => *self.tile.scans.get(i + 1).unwrap().get(r + 1).unwrap(),
+                0 => *self.tile.scans.get(r + 1).unwrap().get(i + 1).unwrap(),
+                2 => *self.tile.scans.get(9 - r - 1).unwrap().get(i + 1).unwrap(),
+                1 => *self.tile.scans.get(i + 1).unwrap().get(9 - r - 1).unwrap(),
+                3 => *self.tile.scans.get(i + 1).unwrap().get(r + 1).unwrap(),
                 _ => panic!("Unexpected orientation."),
             });
         }
@@ -346,8 +346,10 @@ impl Oriented {
         let mut row_bits: Vec<u8> = vec![];
         for i in 0..10 {
             row_bits.push(match self.orientation {
-                0|2 => *self.tile.scans.get(r).unwrap().get(i).unwrap(),
-                1|3 => *self.tile.scans.get(i).unwrap().get(r).unwrap(),
+                0 => *self.tile.scans.get(r).unwrap().get(i).unwrap(),
+                2 => *self.tile.scans.get(9 - r).unwrap().get(i).unwrap(),
+                1 => *self.tile.scans.get(i).unwrap().get(9 - r).unwrap(),
+                3 => *self.tile.scans.get(i).unwrap().get(r).unwrap(),
                 _ => panic!("Unexpected orientation."),
             });
         }
@@ -368,6 +370,14 @@ struct Tile {
 impl Tile {
     fn new(index: u16, scans: Vec<Vec<u8>>) -> Self {
         Tile { index, scans }
+    }
+
+    fn flipped(&self) -> Self {
+        let mut scans = self.scans.to_owned();
+        scans.reverse();
+        Self{
+            index:self.index, scans
+        }
     }
 
     fn edge_orientation(edge: u8) -> bool {
