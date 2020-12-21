@@ -13,15 +13,15 @@ pub fn run() {
     let start = SystemTime::now();
 
     // Let's do this...
-    let data_small = include_str!("../data/data20_small.txt");
-    parse_tiles(&data_small);
-    //parse_tiles(data());
+    let (prod, turbulence) = parse_tiles(data());
 
     let timed = SystemTime::now().duration_since(start).unwrap();
+    println!("The reconsitituted map has signature: {}", fmt_bright(&prod));
+    println!("The sea turbulence is: {}", fmt_bright(&turbulence));
     print_duration(timed);
 }
 
-fn parse_tiles(data: &str) {
+fn parse_tiles(data: &str) -> (u64, u64) {
     let mut tiles = vec![];
     let mut scan = vec![];
     let mut tile_index = 0;
@@ -52,15 +52,6 @@ fn parse_tiles(data: &str) {
 
     println!("Read {} tiles:", tiles.len());
 
-    for tile in &tiles {
-        println!("Tile: {} Keys: {}/{}|{}/{}|{}/{}|{}/{}", tile.index,
-                 tile.key(0, 0), tile.key(0, 2),
-                 tile.key(1, 0), tile.key(1, 2),
-                 tile.key(2, 0), tile.key(2, 2),
-                 tile.key(3, 0), tile.key(3, 2)
-        );
-    }
-
     // Store the key/edge/orientation triples for every number.
     let mut lookup: HashMap<u16, Vec<(u16, u8, bool)>> = HashMap::new();
     for tile in &tiles {
@@ -79,7 +70,6 @@ fn parse_tiles(data: &str) {
 
     // Now lets look at all the tiles, and see which have mathcing edges:
     for tile in &tiles {
-        println!("Tile: {}:", tile.index);
         tile_map.insert(tile.index, tile);
         let mut matching = 0;
         let mut matched_edges = [0;4];
@@ -88,18 +78,14 @@ fn parse_tiles(data: &str) {
                 if matches.len() > 1 {
                     matching += 1;
                     matched_edges[e as usize] = 1;
-                    for (m_tile, m_edge, m_twist) in matches {
-                        if *m_tile != tile.index {
-                            println!("-> E:{} matches tile {}, edge {}, twisted?{}", e, m_tile, m_edge, m_twist);
-                        }
-                    }
                 }
             }
         }
-        println!("Tile: {} matches {} edges: {:?}.", tile.index, matching, matched_edges);
-        if matching  == 1 {
+        
+        if matching  <= 1 {
             panic!("Tile doesn't fit!");
         }
+        
         if matching == 2 {
             corners.push(tile.index as u64);
 
@@ -114,8 +100,8 @@ fn parse_tiles(data: &str) {
         }
     }
 
-    println!("Found potential corners {:?} . Prod = {}", corners, corners.iter().product::<u64>());
-    println!("Working from oriented corners: {:?}", oriented_corners);
+    let corner_product = corners.iter().product::<u64>();
+    println!("Found potential corners {:?} . Prod = {}", corners, corner_product);
 
     // ! Lets build the image array!
     let mut init: Option<&Oriented> = None;
@@ -130,7 +116,6 @@ fn parse_tiles(data: &str) {
             init = Some(first_corner);
         } else if let Some(matches) = lookup.get(&anchor_tile.edge_key(2)) {
             let current = anchor_tile.copy();
-            println!("Matching bottom edge: {}", current.edge_string(2));
                 if let Some((t_index,t_edge, _)) = matches.iter().filter(|(t_index, _, _)| *t_index != current.tile.index).next() {
                     // We've got the tile and edge.
                     let tile = tile_map.get(t_index).unwrap();
@@ -148,8 +133,6 @@ fn parse_tiles(data: &str) {
                             }
                         }
                     }
-                    println!("B ALIGN:{}", current.edge_string(2));
-                    println!("T ALIGN:{}", anchor_tile.edge_string(0));
                     init = Some(&anchor_tile);
                 } else {
                     // We do not have a matching tile.
@@ -172,18 +155,14 @@ fn parse_tiles(data: &str) {
                         for orientation in 0..4 {
                             next_oriented = Oriented::new(orientation, tile);
                             if next_oriented.edge_key(3) == current.edge_key(1) {
-                                println!("Matched:{}:natural", orientation);
                                 break
                             }
                             next_oriented = Oriented::new(orientation, &tile.flipped());
                             if next_oriented.edge_key(3) == current.edge_key(1) {
-                                println!("Matched:{}:flipped", orientation);
                                 break
                             }
                         }
                     }
-                    println!("R ALIGN:{}", current.edge_string(1));
-                    println!("L ALIGN:{}", next_oriented.edge_string(3));
                     current = next_oriented.copy();
                     row.push(next_oriented);
                 } else {
@@ -198,48 +177,32 @@ fn parse_tiles(data: &str) {
     }
 
     let mut chart: Vec<String> = vec![];
-    let mut full_chart: Vec<String> = vec![];
     println!("Re-assembled chart:");
     println!();
     for row in combined {
-        for ri in 0..10 {
+        for ri in 0..8 {
             let mut row_chars = String::from("");
-            let mut full_row_chars = String::from("");
             for t in &row {
                 if ri == 0 {
                     print!(" {}/{} ", t.tile.index, t.orientation);
                 }
 
-                if ri < 8 {
-                    row_chars.push_str(&t.row(ri).to_string());
-                }
-
-                full_row_chars.push_str(&t.full_row(ri).to_string());
-                full_row_chars.push_str(" ");
+                row_chars.push_str(&t.row(ri).to_string());
             }
-            if ri < 8 {
-                chart.push(row_chars);
-            }
-
-            full_chart.push(full_row_chars);
+            chart.push(row_chars);
         }
-        full_chart.push(String::from(""));
         println!();
     }
 
-    for fr in full_chart {
-        println!("{}", fr);
-    }
-
     let row_count = chart.len();
-    let col_count = chart.iter().next().unwrap().len();
+    let col_count = chart.get(0).unwrap().len();
 
     let mut hash_count = 0;
     let mut monster_count = 0;
     for ri in 0..row_count {
         for ci in 0..col_count {
             let chart_row: String = chart.get(ri).unwrap().to_string();
-            if chart_row.get(ci..ci + 1).unwrap() == "#" {
+            if chart_row.get(ci..=ci).unwrap() == "#" {
                 hash_count += 1;
             }
             if monster_at(&chart, ri, ci) {
@@ -248,16 +211,15 @@ fn parse_tiles(data: &str) {
         }
     }
 
-    for row in chart {
-        println!("{}", row);
-    }
-    println!("Saw {} waves and {} monsters.", hash_count  - 15 * monster_count, monster_count);
+    let turbulence = hash_count - 15 * monster_count;
+    println!("Saw {} waves and {} monsters. Turbulence = {}", hash_count, monster_count, turbulence);
+    (corner_product, turbulence)
  }
 
 //                   # 
 // #    ##    ##    ###
 //  #  #  #  #  #  #   
-fn monster_at(chart: &Vec<String>, row: usize, col: usize) -> bool {
+fn monster_at(chart: &[String], row: usize, col: usize) -> bool {
     let monster_coords1: Vec<usize> = vec![18];
     let monster_coords2 = vec![0, 5, 6, 11, 12, 17, 18, 19];
     let monster_coords3 = vec![1, 4, 7, 10, 13, 16];
@@ -273,21 +235,17 @@ fn monster_at(chart: &Vec<String>, row: usize, col: usize) -> bool {
         return false;
     }
 
-    // print!("{}, {} Looking for monsters:", row, col);
     for (row_delta, monster_row) in monster_coords.iter().enumerate() {
-        let chars = chart.get(row + row_delta).unwrap();
+        let row_chars = chart.get(row + row_delta).unwrap();
         for monster_col in monster_row {
             let check_col = monster_col + col;
-            if chars.get(check_col..check_col + 1).unwrap() != "#" {
-      //          println!();
+            if row_chars.get(check_col..=check_col).unwrap() != "#" {
                 return false;
             }
-     //       print!("{}",row_delta);
         }
     } 
 
-    //println!("Found!");
-    return true;
+    true
 }
 
 #[derive(Debug)]
@@ -305,16 +263,8 @@ impl Oriented {
         Self::new(self.orientation, &self.tile)
     }
 
-    fn turn(&mut self) {
-        self.orientation = (self.orientation + 1) % 4;
-    }
-
     fn edge_key(&self, e: u8) -> u16 {
         self.tile.key(e, self.orientation)
-    }
-
-    fn edge_string(&self, e: u8) -> String {
-        self.tile.edge_str(e, self.orientation)
     }
 
     fn flipped(&self) -> Self {
@@ -332,24 +282,6 @@ impl Oriented {
                 2 => *self.tile.scans.get(9 - r - 1).unwrap().get(i + 1).unwrap(),
                 1 => *self.tile.scans.get(i + 1).unwrap().get(9 - r - 1).unwrap(),
                 3 => *self.tile.scans.get(i + 1).unwrap().get(r + 1).unwrap(),
-                _ => panic!("Unexpected orientation."),
-            });
-        }
-
-        if self.orientation == 2 || self.orientation == 3 {
-            row_bits.reverse();
-        }
-        Tile::str_from_vec(&row_bits)
-    }
-
-    fn full_row(&self, r: usize) -> String {
-        let mut row_bits: Vec<u8> = vec![];
-        for i in 0..10 {
-            row_bits.push(match self.orientation {
-                0 => *self.tile.scans.get(r).unwrap().get(i).unwrap(),
-                2 => *self.tile.scans.get(9 - r).unwrap().get(i).unwrap(),
-                1 => *self.tile.scans.get(i).unwrap().get(9 - r).unwrap(),
-                3 => *self.tile.scans.get(i).unwrap().get(r).unwrap(),
                 _ => panic!("Unexpected orientation."),
             });
         }
@@ -409,15 +341,6 @@ impl Tile {
         s
     }
 
-    fn edge_str(&self, side: u8, shift: u8) -> String {
-        let shifted = (side + shift) % 4;
-        let mut key_vec = self.key_vec(shifted);
-        if Self::edge_orientation(side) != Self::edge_orientation(shifted) {
-            key_vec.reverse();
-        }
-        Tile::str_from_vec(&key_vec)
-    }
-
     fn key(&self, side: u8, shift: u8) -> u16 {
         let shifted = (side + shift) % 4;
         
@@ -445,5 +368,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_all() {}
+    fn test_small() {
+        let data_small = include_str!("../data/data20_small.txt");
+        assert_eq!((20899048083289, 273), parse_tiles(&data_small));
+    }
+
+    #[test]
+    fn test_all() {
+        assert_eq!((7492183537913, 2323), parse_tiles(data()));
+    }
 }
