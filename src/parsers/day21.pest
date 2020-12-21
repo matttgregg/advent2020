@@ -1,0 +1,8 @@
+file = { SOI ~ foodstuff ~ (NEWLINE+ ~ foodstuff)* ~ NEWLINE* ~ EOI }
+
+// mxmxvkd kfcds sqjhc nhms (contains dairy, fish)
+foodstuff = { ingredient+ ~ "(contains" ~ allergen ~ (", " ~ allergen)* ~ ")"  }
+ingredient = ${ ASCII_ALPHA+ }
+allergen = ${ ASCII_ALPHA+ }
+
+WHITESPACE = _{ " " }
