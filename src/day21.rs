@@ -16,18 +16,15 @@ pub fn run() {
     let start = SystemTime::now();
 
     // Let's do this...
-    let data_small = "mxmxvkd kfcds sqjhc nhms (contains dairy, fish)
-trh fvjkl sbzzf mxmxvkd (contains dairy)
-sqjhc fvjkl (contains soy)
-sqjhc mxmxvkd sbzzf (contains fish)";
-    parse_foods(&data_small);
-    parse_foods(data());
+    let (safe_uses, canonical_list) = parse_foods(data());
+    println!("Safe ingredients are used {} times.", fmt_bright(&safe_uses));
+    println!("Canonical Dangerous Ingredient List (CDIL): {}", fmt_bright(&canonical_list));
 
     let timed = SystemTime::now().duration_since(start).unwrap();
     print_duration(timed);
 }
 
-fn parse_foods(data: &str) {
+fn parse_foods(data: &str) -> (u64, String) {
     let parsed = DParser::parse(Rule::file, data)
         .expect("unsuccessful parse")
         .next()
@@ -56,12 +53,11 @@ fn parse_foods(data: &str) {
         for allergen in &food.allergens {
             all_allergens
                 .entry(allergen.to_string())
-                .or_insert(vec![])
+                .or_insert_with(Vec::new)
                 .push(i)
         }
     }
 
-    println!("Found allergens: {:?}", all_allergens);
     let mut dangerous_foods = HashSet::new();
     let mut possible_foods = HashMap::new();
 
@@ -79,7 +75,6 @@ fn parse_foods(data: &str) {
                     .collect();
             }
         }
-        println!("Allergen {} must be in {:?}", allergen, foods_intersect);
         let mut possible = vec![];
         for food in foods_intersect {
             dangerous_foods.insert(food);
@@ -87,8 +82,6 @@ fn parse_foods(data: &str) {
         }
         possible_foods.insert(allergen, possible);
     }
-
-    println!("Found dangerous foods: {:?}", dangerous_foods);
 
     let mut safe_foods = HashSet::new();
     let mut safe_uses = 0;
@@ -100,9 +93,6 @@ fn parse_foods(data: &str) {
             }
         }
     }
-
-    println!("Found safe foods: {:?}", safe_foods);
-    println!("Total safe ingredients: {}", safe_uses);
 
     // Work out the dangerous ingredients.
     let mut dangerous: HashMap<String, String> = HashMap::new();
@@ -118,16 +108,15 @@ fn parse_foods(data: &str) {
 
             let mut options = vec![];
             for f in foods {
-                if !fixed.contains(&f) {
+                if !fixed.contains(*f) {
                     options.push(f);
                 }
             }
 
             if options.len() == 1 {
-                let bad_ingredient = options.get(0).unwrap().clone();
-                fixed.insert(bad_ingredient);
+                let bad_ingredient = **options.get(0).unwrap();
+                fixed.insert(bad_ingredient.clone());
                 dangerous.insert(allergen.clone(), bad_ingredient.to_string());
-                println!("{} is in {}", allergen, bad_ingredient);
                 count_fixed += 1;
             }
         }
@@ -143,7 +132,7 @@ fn parse_foods(data: &str) {
     }
     let canonical_ingredients: Vec<_> = sorted_danger.iter().map(|(_, ingredient)| (*ingredient).to_string()).collect();
     let canonical_list = canonical_ingredients.join(",");
-    println!("Canonical Dangerous Ingredient List (CDIL): {:?}", canonical_list);
+    (safe_uses, canonical_list)
 }
 
 #[derive(Debug)]
@@ -170,5 +159,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_all() {}
+    fn test_small() {
+        let data_small = "mxmxvkd kfcds sqjhc nhms (contains dairy, fish)
+trh fvjkl sbzzf mxmxvkd (contains dairy)
+sqjhc fvjkl (contains soy)
+sqjhc mxmxvkd sbzzf (contains fish)";
+        assert_eq!((5, String::from("mxmxvkd,sqjhc,fvjkl")), parse_foods(&data_small));
+    }
+
+    #[test]
+    fn test_all() {
+        assert_eq!((1679, String::from("lmxt,rggkbpj,mxf,gpxmf,nmtzlj,dlkxsxg,fvqg,dxzq")), parse_foods(data()));
+    }
 }
