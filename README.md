@@ -383,3 +383,82 @@ but it wasn't necessary in the end.)
 
 So - a fairly long day, but a lot going on, and several stages, and interesting algorithms. Maybe my favourite so far.
 
+# Day 21
+
+Another fun one! It felt like it harked back to day 16 (at the end) where attempting to determine the allowable interpretation of 
+some fields.
+It's telling that this is one of those where *almost* everyone with the first star also has the second star. (It seems a lot of people
+accidentally solved the second part while solving part one!)
+
+In any case, it's a nice change of pace from the sea monsters. There's some tweaking to get it done efficiently, but nothing too bad. Looking
+at the problems that people have had, there seems a reasonable hurdle in just understanding the problem properly. There is a small cognitive
+gap I think (or at least, the description is complete, but there's a slight jump to make from the description to what you need to solve the
+problem. I think it's quite subtle though.) Once you've got straight what the consequences of the problem are though, the actual implementation 
+is straight forward.
+
+# Day 22
+
+The crab trials. This was fun, and I liked the narrative around it, becoming increasingly demented, adrift in the sea, locking wits
+with a small crab.
+
+Again, this day was mostly about keeping the rules straight in your head. Then the second part involves keeping it straight, through
+multiple levels of recursion, and implementing it cleanly. I like this sort of problem in that it's challenging, but *dosn't* rely on
+a mathematical insight. It's a good exercise in envisioning how the programme runs in a complex recursive manner.
+
+One major performance I found was to use the default Rust hasher rather than building a string key for the game state each round. This was
+a bit cheeky of me - I had an *suspicion* that creating the hash was pretty expensive, and runnning on the inner loop. Redditor's also 
+commented on this being a major cost. Swtiching to the built in hasher gave me a ten-fold speed improvement, so good win.
+
+# Day 23
+
+The crab strikes back! I'm really enjoying the atmosphere on this raft. And the balance between the two parts was very nice too, a classic
+case of part one being implementable in a straight forward fashion, but part two (although essentially the same) needs some real insights
+into fixing raising performance by several orders of magnitude.
+
+I had an inkling that this would be the case, but went ahead with a rough and ready solution. My reasoning was:
+
+  a. It would get me into part 2 as quickly as possible, so I could start thinking on it.
+  b. It would give me something to validate against.
+  c. I don't know exactly what performance direction I'd have to optimize for.
+
+My solution was maybe egregiously rough... reallocating the whole data set for every round. But, it's enough for part one.
+The second part, I had a couple of false starts:
+
+  * I had some idea that maybe the cup movements would stay fairly localized, so I'd be able to stick with a small part of the 
+  game rather than trying to model all of the million cups. A quick mock up showed that to be false (and a proper reading of the
+  example result should have warned me). Also, the memory allocation is still too pricey, I grind to a halt once the set I need to 
+  consider hits a few tens of thousands anyway.
+  
+  * These ring type data structures start me thinking on linked lists, doubly linked lists, zippers, etc. I get towards implementing
+  a doubly linked lists...
+  
+  * ... and then think of mashing it down to a handful of static data structures. (i.e. Essentially the same data, but handling the 
+  storage myself.) A few arrays to track the next/last/value of each cell.
+  
+  * ... and then while sketching out how that would look on paper, realise I don't need the previous cell and can do it all in a simple
+  array of integers. Implementation is clear from this point.
+  
+It all progresses neatly from there, with my existing implementation as guidance. I had a brief misstep at the very last when I read the 
+values I needed as two the theh *left* of 1 - as a result it was extra complication and worried me by getting the wrong answer on the 
+test data. It was brief though, re-read and fixed and matched against the test data. Then run against the full data and finished off that 
+second star.
+
+At that point my solution was running in 3 seconds, which is OK, but seems longer than ideal. I pull out the usual tricks to beef things up:
+
+  * Use pre-allocated arrays, rather than vectors. This is nudging the limit that the program stack can handle - and annoyingly it's one of
+  the places where Rust errors aren't so good. You just get a brief 'stock overflow' message.
+  
+  * ... on the other hand, Clippy has some very helpful suggestions on how to box the array and allocate it on the heap.
+  
+  * I pull out the hash set I was using to skip over the removed cups when finding where to insert. I don't actually know if this helps
+  much, but it feels wasteful to use a hash set to check against exactly three elements.
+  
+  * I rip out the initial implementation of part one, and replace with my super charged version.
+  
+I'm now down to about 300ms for the full day, and can rest easy.
+
+Incidentally, this has a very similar flavour to a puzzle back in 2018, which I was doing in Racket (I think?). It was a similar game involving
+elves sitting in a ring, and had a similar second part where the complexity sky rockets. Being a fairly naive Racket programmer I did 
+everything with immutable data structures at first and watched my CPU melt. It was a good learning experience though, and ended up
+having to learn more about Racket, and learned about zipper data structures for the first time.
+
