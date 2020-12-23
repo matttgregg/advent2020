@@ -1,11 +1,11 @@
-use std::time::SystemTime;
 use std::collections::{HashSet, VecDeque};
 use std::convert::TryFrom;
+use std::time::SystemTime;
 
 use advent2020::{fmt_bright, print_day, print_duration};
 
 fn data() -> &'static str {
-    include_str!( "../data/data22.txt")
+    include_str!("../data/data22.txt")
 }
 
 pub fn run() {
@@ -14,37 +14,26 @@ pub fn run() {
     let start = SystemTime::now();
 
     // Let's do this...
-    let small_game = "Player 1:
-9
-2
-6
-3
-1
 
-Player 2:
-5
-8
-4
-7
-10";
-    let score_small = winner_simple(&small_game);
-    println!("The small game score: {}", score_small);
-    let score = winner_simple(data());
-    println!("The winning game score is: {}", fmt_bright(&score));
-
-    let (rwinner_small, rscore_small) = run_rgame(&small_game);
-    println!("The winner of the small recursive game is {} with {}", rwinner_small, rscore_small);
-    let (rwinner, rscore) = run_rgame(data());
-    println!("The winner of the recursive game is {} with {}", rwinner, rscore);
-
+    let (winner, score) = winner_simple(data());
+    let (recursive_winner, recursive_score) = run_rgame(data());
 
     let timed = SystemTime::now().duration_since(start).unwrap();
+    println!(
+        "The winner of the simple game is player {} with {}",
+        winner, score
+    );
+    println!(
+        "The winner of the recursive game is player {} with {}",
+        recursive_winner,
+        fmt_bright(&recursive_score)
+    );
     print_duration(timed);
 }
 
-fn winner_simple(game: &str) -> u64 {
-    let winning_deck = play_game(game);
-    score_deck(&winning_deck)
+fn winner_simple(game: &str) -> (u8, u64) {
+    let (winner, winning_deck) = play_game(game);
+    (winner, score_deck(&winning_deck))
 }
 
 fn score_deck(deck: &VecDeque<u64>) -> u64 {
@@ -59,7 +48,7 @@ fn score_deck(deck: &VecDeque<u64>) -> u64 {
     total_score
 }
 
-fn play_game(game: &str) -> VecDeque<u64> {
+fn play_game(game: &str) -> (u8, VecDeque<u64>) {
     let (mut deck_one, mut deck_two) = read_decks(game);
 
     while !deck_one.is_empty() && !deck_two.is_empty() {
@@ -74,23 +63,23 @@ fn play_game(game: &str) -> VecDeque<u64> {
     }
 
     if deck_one.is_empty() {
-        deck_two
+        (2, deck_two)
     } else {
-        deck_one
+        (1, deck_one)
     }
 }
 
 fn run_rgame(game: &str) -> (u8, u64) {
-    let (mut deck_one, mut deck_two) = read_decks(game);
+    let (deck_one, deck_two) = read_decks(game);
     play_rgame(deck_one, deck_two)
 }
 
 fn deck_key(deck_one: &VecDeque<u64>, deck_two: &VecDeque<u64>) -> String {
     // We just put the string representations together.
-    let mut first_cards: Vec<String> = deck_one.iter().map(|x| format!("{}", x)).collect();
-    let mut second_cards: Vec<String> = deck_one.iter().map(|x| format!("{}", x)).collect();
+    let first_cards: Vec<String> = deck_one.iter().map(|x| format!("{}", x)).collect();
+    let second_cards: Vec<String> = deck_two.iter().map(|x| format!("{}", x)).collect();
     let mut key = first_cards.join(",");
-    key.push_str(":");
+    key.push(':');
     key.push_str(&second_cards.join(","));
     key
 }
@@ -117,7 +106,9 @@ fn play_rgame(mut deck_one: VecDeque<u64>, mut deck_two: VecDeque<u64>) -> (u8, 
         } else {
             games_seen.insert(deck_key);
             let (card1, card2) = (deck_one.pop_front().unwrap(), deck_two.pop_front().unwrap());
-            if usize::try_from(card1).unwrap() <= deck_one.len() && usize::try_from(card2).unwrap() <= deck_two.len() {
+            if usize::try_from(card1).unwrap() <= deck_one.len()
+                && usize::try_from(card2).unwrap() <= deck_two.len()
+            {
                 // We *can recurse!
                 let sub_deck1 = copy_deck(&deck_one, card1);
                 let sub_deck2 = copy_deck(&deck_two, card2);
@@ -125,7 +116,7 @@ fn play_rgame(mut deck_one: VecDeque<u64>, mut deck_two: VecDeque<u64>) -> (u8, 
                 winner = sub_winner;
             } else {
                 // We can't recurse. Highest wins.
-                winner = if card1 > card2 { 1 } else {2}; 
+                winner = if card1 > card2 { 1 } else { 2 };
             }
 
             // Winner collects the cards.
@@ -175,12 +166,26 @@ fn read_decks(game: &str) -> (VecDeque<u64>, VecDeque<u64>) {
     (deck_one, deck_two)
 }
 
-
-
 mod tests {
     #[allow(unused_imports)]
     use super::*;
 
     #[test]
-    fn test_all() {}
+    fn test_small() {
+        let small_game = "Player 1:
+9
+2
+6
+3
+1
+
+Player 2:
+5
+8
+4
+7
+10";
+        assert_eq!((2, 306), winner_simple(&small_game));
+        assert_eq!((2, 291), run_rgame(&small_game));
+    }
 }
