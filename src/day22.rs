@@ -1,6 +1,8 @@
 use std::collections::{HashSet, VecDeque};
+use std::collections::hash_map::DefaultHasher;
 use std::convert::TryFrom;
 use std::time::SystemTime;
+use std::hash::{Hash, Hasher};
 
 use advent2020::{fmt_bright, print_day, print_duration};
 
@@ -74,14 +76,10 @@ fn run_rgame(game: &str) -> (u8, u64) {
     play_rgame(deck_one, deck_two)
 }
 
-fn deck_key(deck_one: &VecDeque<u64>, deck_two: &VecDeque<u64>) -> String {
-    // We just put the string representations together.
-    let first_cards: Vec<String> = deck_one.iter().map(|x| format!("{}", x)).collect();
-    let second_cards: Vec<String> = deck_two.iter().map(|x| format!("{}", x)).collect();
-    let mut key = first_cards.join(",");
-    key.push(':');
-    key.push_str(&second_cards.join(","));
-    key
+fn deck_key(deck_one: &VecDeque<u64>, deck_two: &VecDeque<u64>) -> u64 {
+    let mut s = DefaultHasher::new();
+    (deck_one, deck_two).hash(&mut s);
+    s.finish()
 }
 
 fn copy_deck(from: &VecDeque<u64>, count: u64) -> VecDeque<u64> {
