@@ -25,6 +25,10 @@ pub fn print_day(d: i32) {
     println!(" \u{1F389} {}Day {} !{}", style::Underline, d, style::Reset);
 }
 
+pub fn crab() -> String {
+    String::from("\u{1F980}")
+}
+
 pub fn print_duration(d: time::Duration) {
     if d.as_micros() < 1000 {
     println!(" \u{1F44D} {}Timed: {}us {}", style::Invert, d.as_micros(), style::Reset);

@@ -4,7 +4,7 @@ use std::convert::TryFrom;
 use std::time::SystemTime;
 use std::hash::{Hash, Hasher};
 
-use advent2020::{fmt_bright, print_day, print_duration};
+use advent2020::{crab, fmt_bright, print_day, print_duration};
 
 fn data() -> &'static str {
     include_str!("../data/data22.txt")
@@ -23,7 +23,7 @@ pub fn run() {
     let timed = SystemTime::now().duration_since(start).unwrap();
     println!(
         "The winner of the simple game is player {} with {}",
-        winner, score
+        winner, fmt_bright(&score)
     );
     println!(
         "The winner of the recursive game is player {} with {}",
@@ -33,9 +33,10 @@ pub fn run() {
     print_duration(timed);
 }
 
-fn winner_simple(game: &str) -> (u8, u64) {
+fn winner_simple(game: &str) -> (String, u64) {
     let (winner, winning_deck) = play_game(game);
-    (winner, score_deck(&winning_deck))
+    let winner_name = if winner == 2 { crab() } else { String::from("ME") };
+    (winner_name, score_deck(&winning_deck)) 
 }
 
 fn score_deck(deck: &VecDeque<u64>) -> u64 {
@@ -71,9 +72,12 @@ fn play_game(game: &str) -> (u8, VecDeque<u64>) {
     }
 }
 
-fn run_rgame(game: &str) -> (u8, u64) {
+fn run_rgame(game: &str) -> (String, u64) {
     let (deck_one, deck_two) = read_decks(game);
-    play_rgame(deck_one, deck_two)
+    let (winner, score) = play_rgame(deck_one, deck_two);
+
+    let winner_name = if winner == 2 { crab() } else { String::from("ME") };
+    (winner_name, score)
 }
 
 fn deck_key(deck_one: &VecDeque<u64>, deck_two: &VecDeque<u64>) -> u64 {
@@ -183,7 +187,13 @@ Player 2:
 4
 7
 10";
-        assert_eq!((2, 306), winner_simple(&small_game));
-        assert_eq!((2, 291), run_rgame(&small_game));
+        assert_eq!((crab(), 306), winner_simple(&small_game));
+        assert_eq!((crab(), 291), run_rgame(&small_game));
+    }
+
+    #[test]
+    fn test_all() {
+        assert_eq!((crab(), 32783), winner_simple(data()));
+        assert_eq!((crab(), 33455), run_rgame(data()));
     }
 }
