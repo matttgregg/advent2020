@@ -1,5 +1,4 @@
 use std::time::SystemTime;
-use std::collections::{HashSet};
 use std::convert::TryFrom;
 
 use advent2020::{fmt_bright, print_day, print_duration, crab};
@@ -31,7 +30,7 @@ fn play_big_game(init: &str, cups: usize, rounds: usize) -> u64 {
 
     // Find left of one.
     let after_one = *game.get(1).unwrap();
-    let next_after_one = *game.get(after_one).unwrap();
+    let next_after_one = *game.get(after_one as usize).unwrap();
 
     let grand_product = u64::try_from(after_one).unwrap() * u64::try_from(next_after_one).unwrap();
     println!("The values after 1 are: {} x {} ==> {}", after_one, next_after_one, grand_product);
@@ -46,7 +45,7 @@ fn play_game(init: &str, rounds: usize) -> String {
     from_one(cups, &game)
 } 
 
-fn from_one(count: usize, cups: &[usize]) -> String {
+fn from_one(count: usize, cups: &[u32]) -> String {
     let mut code = String::from("");
 
     let mut at_cup = 1;
@@ -54,57 +53,53 @@ fn from_one(count: usize, cups: &[usize]) -> String {
     for _ in 1..count {
         let move_to = cups.get(at_cup).unwrap();
         code.push_str(format!("{}", *move_to).as_str());
-        at_cup = *move_to;
+        at_cup = *move_to as usize;
     }
     code
 
 }
 
-fn smart_round(max: usize, cups: &mut Vec<usize>, focus: usize) -> usize {
+fn smart_round(max: usize, cups: &mut [u32], focus: usize) -> usize {
     // Pop three after the focus.
-    let mut popped = HashSet::new();
-    
-    let first_popped = *cups.get(focus).unwrap();
-    popped.insert(first_popped);
-
-    // Two steps to find the last popped.
-    let mut last_popped = *cups.get(first_popped).unwrap();
-    popped.insert(last_popped);
-    last_popped = *cups.get(last_popped).unwrap(); 
-    popped.insert(last_popped);
+    let first_popped = *cups.get(focus).unwrap() as usize;
+    let middle_popped = *cups.get(first_popped).unwrap() as usize;
+    let last_popped = *cups.get(middle_popped).unwrap() as usize;
 
     // The focus is reconnected to the following entry.
-    cups[focus] = cups[last_popped];
+    cups[focus] = cups[last_popped as usize];
 
     let mut insert_at = focus - 1;
     if insert_at == 0 {
         insert_at = max;
     }
     
-    while popped.contains(&insert_at) {
-        insert_at -= 1;
-        if insert_at == 0 {
-            insert_at = max;
+    while
+        (insert_at == first_popped)
+        || (insert_at == middle_popped)
+        || (insert_at == last_popped) {
+            insert_at -= 1;
+            if insert_at == 0 {
+                insert_at = max;
+            }
         }
-    }
 
     // Stitch in the popped values.
     let end_of_stitch = *cups.get(insert_at).unwrap();
-    cups[insert_at] = first_popped;
+    cups[insert_at] = u32::try_from(first_popped).unwrap();
     cups[last_popped] = end_of_stitch;
 
     // Return the new focus.
-    cups[focus]
+    cups[focus] as usize
 }
 
-fn init_smart_game(init: &str, max: usize) -> (Vec<usize>, usize) {
-    let mut game = vec![0; max + 1];
-    let vals =  init.chars().filter_map(|x| x.to_string().parse::<usize>().ok());
+fn init_smart_game(init: &str, max: usize) -> (Box<[u32]> , usize) {
+    let mut game = vec![0_u32; 1_000_001].into_boxed_slice();
+    let vals =  init.chars().filter_map(|x| x.to_string().parse::<u32>().ok());
     let mut previous = None;
     let mut first = 0;
     for val in vals {
         if let Some(p) = previous  {
-            game[p] = val;
+            game[p as usize] = val;
         } else {
             first = val;
         }
@@ -114,16 +109,16 @@ fn init_smart_game(init: &str, max: usize) -> (Vec<usize>, usize) {
     // Now, need to add the remainder.
     for i in (init.len() + 1)..=max {
         if let Some(p) = previous  {
-            game[p] = i;
+            game[p as usize] = u32::try_from(i).unwrap();
         }
-        previous = Some(i)
+        previous = Some(u32::try_from(i).unwrap())
     }
 
     // Finally, the last value loops.
     if let Some(p) = previous {
-        game[p] = first;
+        game[p as usize] = first;
     }
-    (game, first)
+    (game, first as usize)
 }
 
 mod tests {
