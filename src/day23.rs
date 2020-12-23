@@ -130,23 +130,23 @@ mod tests {
     #[allow(unused_imports)]
     use super::*;
 
-    /*
     #[test]
-    fn test_small() {
+    fn test_small_game() {
         
         let demo_data = "389125467";
-        let demo_cups_10 = play_until(&demo_data, 10);
-        let demo_cups_100 = play_until(&demo_data, 10);
-        
-        println!("Demo, after 10 = {}", result_for(&demo_cups_10));
-        println!("Demo, after 100 = {}", result_for(&demo_cups_100));
-        
-        //let demo_big = play_big_game(&demo_data, 10_000_000);
-        let demo_big = play_big_game(&demo_data, 1_000_000, 10_000_000);
-        println!("Finished big demo game.");
+        assert_eq!("92658374", play_game(&demo_data, 10));
+        assert_eq!("67384529", play_game(&demo_data, 100));
     }
-    */
 
     #[test]
-    fn test_all() {}
+    fn test_big_game() {
+        let demo_data = "389125467";
+        assert_eq!(149245887792, play_big_game(&demo_data, 1_000_000, 10_000_000));
+    }
+
+    #[test]
+    fn test_all() {
+        assert_eq!("89372645", play_game(data(), 100));
+        assert_eq!(21273394210, play_big_game(data(), 1_000_000, 10_000_000));
+    }
 }
