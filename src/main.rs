@@ -25,6 +25,7 @@ mod day20;
 mod day21;
 mod day22;
 mod day23;
+mod day24;
 
 fn main() {
     match day_arg(env::args()) {
@@ -51,6 +52,7 @@ fn main() {
         Some(21) => day21::run(),
         Some(22) => day22::run(),
         Some(23) => day23::run(),
+        Some(24) => day24::run(),
         Some(0) => {
             day1::run();
             day2::run();
@@ -75,6 +77,7 @@ fn main() {
             day21::run();
             day22::run();
             day23::run();
+            day24::run();
         }
         Some(x) => { eprintln!("Unimplemented day {}", x); process::exit(1);},
         None => { eprintln!("No valid day on command line {:#?}", env::args()); process::exit(1);},
