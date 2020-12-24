@@ -1,5 +1,5 @@
 use std::time::SystemTime;
-use std::collections::HashSet;
+use std::collections::{HashSet, HashMap};
 
 use advent2020::{fmt_bright, print_day, print_duration};
 
@@ -12,28 +12,27 @@ pub fn run() {
 
     let start = SystemTime::now();
 
-    let data_small = include_str!("../data/data24_small.txt");
-    parse_tiles(&data_small);
-    parse_tiles(data());
-
     // Let's do this...
+    let (initial, final_tiles) = parse_tiles(data());
 
     let timed = SystemTime::now().duration_since(start).unwrap();
+    println!("The workman initially set out {} black tiles.", fmt_bright(&initial));
+    println!("After toiling for 100 hours, there are {} black tiles.", fmt_bright(&final_tiles));
     print_duration(timed);
 }
 
-fn parse_tiles(data: &str) {
+fn parse_tiles(data: &str) -> (usize, usize) {
     // Each line is non-delimited e/se/ne/w/nw/ne
     // We pick our coordinate system s.t. ne/sw is on diagonal, nw, se on constant.
     let mut black_tiles = HashSet::new();
 
     for line in data.lines() {
-        if line.len() == 0 {
+        if line.is_empty() {
             continue;
         }
 
-        let mut x = 0;
-        let mut y = 0;
+        let mut x = 0_i64;
+        let mut y = 0_i64;
         let mut previous = None;
 
         for c in line.chars() {
@@ -57,7 +56,7 @@ fn parse_tiles(data: &str) {
                         Some('s') => {
                             y -= 1; // se is on the vertical.
                         },
-                        _ => panic!("unexpected direction."),
+                        Some(_) => panic!("unexpected direction."),
                     };
                     previous = None;
                 },
@@ -73,7 +72,7 @@ fn parse_tiles(data: &str) {
                             y -= 1;
                             x -= 1; // sw is on the diagonal.
                         },
-                        _ => panic!("unexpected direction"),
+                        Some(_) => panic!("unexpected direction"),
                     };
                     previous = None;
                 },
@@ -86,15 +85,52 @@ fn parse_tiles(data: &str) {
         }
 
         if black_tiles.contains(&(x, y)) {
-            println!("Unflipping tile {}, {}", x, y);
             black_tiles.remove(&(x, y));
         } else {
-            println!("Flipping tile {}, {}", x, y);
             black_tiles.insert((x, y));
         }
     }
 
-    println!("Total black tiles: {}", black_tiles.len());
+    let initial_tiles = black_tiles.len();
+
+    // Perform 100 iterations.
+
+    for _ in 0..100 {
+        black_tiles = flip_tiles(&black_tiles);
+    }
+
+    (initial_tiles, black_tiles.len())
+}
+
+fn flip_tiles(tiles: &HashSet<(i64, i64)>) -> HashSet<(i64, i64)> {
+    // Build the adjacency lists:
+    let mut marked_neighbours: HashMap<(i64, i64), i64> = HashMap::new();
+
+    for (x, y) in tiles {
+        *marked_neighbours.entry((x + 1, *y)).or_insert(0) += 1;
+        *marked_neighbours.entry((x - 1, *y)).or_insert(0) += 1;
+        *marked_neighbours.entry((x + 1, y + 1)).or_insert(0) += 1;
+        *marked_neighbours.entry((x - 1, y - 1)).or_insert(0) += 1;
+        *marked_neighbours.entry((*x, y + 1)).or_insert(0) += 1;
+        *marked_neighbours.entry((*x, y - 1)).or_insert(0) += 1;
+    }
+
+    let mut new_tiles = HashSet::new();
+
+    for (tile, neighbour_count) in marked_neighbours {
+        if tiles.contains(&tile) {
+            if (1..=2).contains(&neighbour_count) {
+            // Black tiles with 1 or 2 neighbours stay black.
+            new_tiles.insert(tile);
+            }
+        } else if neighbour_count == 2 {
+            // White tiles with exactly 2 marked neighbours turn black.
+            new_tiles.insert(tile);
+        }
+    }
+
+    new_tiles
+
 }
 
 mod tests {
@@ -102,5 +138,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_all() {}
+    fn test_small() {
+        let data_small = include_str!("../data/data24_small.txt");
+        assert_eq!((10, 2208), parse_tiles(&data_small));
+    }
+
+    #[test]
+    fn test_all() {
+        assert_eq!((377, 4231), parse_tiles(data()));
+    }
 }

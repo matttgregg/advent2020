@@ -462,3 +462,27 @@ elves sitting in a ring, and had a similar second part where the complexity sky 
 everything with immutable data structures at first and watched my CPU melt. It was a good learning experience though, and ended up
 having to learn more about Racket, and learned about zipper data structures for the first time.
 
+# Day 24
+
+Bizarrely, I think this was actually my fastest to implement this year. I did spend some time thinking about the problem this morning, but
+implementation was about half an hour.
+
+  * The key observation relies on reducing the hexagon problem to a simple grid. Best way to think is pencil on paper - you *could* work out
+  real x, y coordinates, with an annoying root three appearing because of the 60 degree angle.
+  * You *could* deal with that by using float, and appropriate 'close enough' equality.
+  * You *could* deal with that by storing your coordinates as an integer part, and a root three part. (Observing that you'll never be able
+  to form an integer by adding root three parts, and vice versa.)
+  * Or...
+  * Observe that the hex grid is rectangular grid with a slightly skewed connectivity.
+  
+Once you realise the last it's pretty trivial. Essentially the east/west directions behave as normal (plus/minus on the x axis), while the
+angled connections are slightly skewed. It doesn't matter which way - I put sw -> ne on the diagonal, and se -> nw on the vertical. Visually
+this looks like just shoving rows of hexagons so they line up on a rectangular grid.
+
+The previous problems have primed me well for game of life type problems, although I do try something slightly new for this one (I build a 
+count of neghbours, rather than check the neighbours of each tile.) I rely heavily on hash sets/maps. I don't bother to optimise with 
+arrays for this problem.
+
+All clear quickly, and ready for tomorrow. I almost definitely won't have time to complete tomorrow on Christmas day, but look forward to 
+having a think and getting it implemented over the holidays.
+
