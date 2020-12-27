@@ -486,3 +486,104 @@ arrays for this problem.
 All clear quickly, and ready for tomorrow. I almost definitely won't have time to complete tomorrow on Christmas day, but look forward to 
 having a think and getting it implemented over the holidays.
 
+# Day 25
+I make a conscious decision not to try on Christmas day itself, so finally get around to looking at it Boxing day morning.
+Key exchange... I'm incredibly rusty on the public key cryptography, but know AoC problems are well researched, and this looks like
+a realisitic fragment of cryptographic exchange.
+I'm not feeling like jumping into number theory thinking, so decide to code it up fairly dirty before thinking about it too hard. Besides, the
+loop numbers are relatively small... maybe I don't need to be clever.
+Ok - first shot was a little too dirty. Checking each loop number from zero every time is perhaps a bit too egregiously wasteful. Let's 
+just keep looping until we find the right number. And sure enough, I get an answer in about 200ms.
+
+Many, many thanks to Eric for putting this all together.
+
+# Thoughts on Completion
+
+* On AoC : 
+
+  * It's been a lot of fun, and definitely coding within a community, both online and at work has spurred me on to complete for the
+  first time.
+  
+  * It's been incredibly beneficial having small, measurable successes every day for the month. This feels like a useful lesson on
+  my working practices. I'll try to recreate something similar in other contexts next year. (i.e. regular, small successes, rather than 
+  large unwieldy projects.)
+  
+  * You can't please everyone! Almost every aspect of AoC frustrates someone. It's either too hard, too easy, too focussed on computer
+  science knowledge, too focussed on maths, too familiar, not familiar enough, too short, too long, etc. etc. etc. I worry some people are
+  too fixed on finding the 'right' solution, like an exam. And then on the other hand there are those who program in Excel or emoji
+  script.
+  
+  * For what it's worth, I didn't remember chinese remainder theorem, but deduced as much as I needed to solve the problem. I didin't know
+  the shunting car algorithm properly, but implemented a crude imitation of enough of it to solve the day. 
+  
+  * For my part, I think Eric does an amazing job of creating fair, varied question which don't *require* specialised knowledge. There's
+  definitely some variation in style (some more maths-y, some more comp-sci or puzzle-y) but I like that. Every question looks like it's
+  been pretty rigorously beta-tested and is thus well written and clearly worded. Anytime I misinterpreted it was because I'd rushed
+  reading it properly. The story element worked for me too, just the right side of surreal, and didn't get in the way.
+  
+  * Having a parse library easily available is a great help. It's often not the most performat
+  
+  * The construction of the examples is superb. Just enough to work as pretty full test cases, simple enough to help with debugging.
+  
+  * Looking back over the puzzles I'd forgotten how many, and how many I'd enjoyed.
+  
+  * There were none that I truly disliked.
+  
+  * There was variation in how hard they were/how long they took, but I enjoyed that.
+  
+  * The crab days won me over on the atmosphere.
+  
+  * The Conway variations were cool, and a nice theme to recur.
+  
+  * The shiny gold bags problem feels like a classic.
+  
+  * My overall favourite was the sea monsters. I know it infuriated some people as needing more work, but I enjoyed every step. Rather
+  than hard or unfair, it felt multi-layered. It didn't feel the hardest in terms of leaps of deduction required, more how to 
+  keeps quite a lot of information and relationships under control.
+
+* On Rust
+
+  * Overall I give a strong thumbs up to rust. I'd describe it as low level (i.e. C/C++/Golang space) but with sufficient high level
+  features that make using it extremely positive.
+  
+  * Having high level features like pattern matching, generics, traits were mind blowing. I'm comparing to go, where features are either
+  highly restricted (e.g. generics but only for built in types), or not present at all (like pattern matching.) I will miss these a lot when
+  I go back to go. I'm extremely grateful to be trying Rust now rather than five years ago.
+  
+  * While expressive constructs are available, they're not at the cost of performance. Rust makes it easy to reason about performance of 
+  code, and improve it where necessary. I certainly didn't become a rust expert, but rust is low level enough that it's usually clear 
+  where inefficiences are going to be. By just being relatively smart about the algorithms and data structures, my entire advent of code
+  ran safely under three seconds. There were only a couple of days when I really pushed on performance, and the rust code made it very easy
+  to do so.
+  
+  * The borrow checker - is more help than hindrance (I think) but does need to be respected. 80% of the time, I'd be able to ignore
+  the borrow checker (or implement changes suggested by clippy), but occassionally it would get so upset at something that I'd really
+  need to sit down and understand it properly. I need to work with the borrow checker more, keep track of references more clearly. I 
+  particularly need to think about structs containing other structs.
+  
+  * I learned to love the naming conventions. (Snake case mostly.)
+  
+  * I didn't touch unsafe rust or macros at all, but I got an impression of their power from some of the libraries. I'll happily re-read the
+  rust book, confident of being able to follow these chapters now. Same for concurrency and async - although AoC isn't typically useful on 
+  multiple threads.
+  
+  * Initially I was frustrated at putting back in semi-colons, but I got over it. It feels like a reasonable trade off for slightly more
+  flexible layout.
+  
+  * Clippy is excellent. Clippy on pedantic mode is pedantically excellent.
+  
+  * Generally all the tooling I found worked well. Adding new crate references was a breeze with cargo. Similarly for creating and 
+  running tests. The built in documentation is always great.
+  
+  * Rust *does* have a higher learning curve than some languages. There are a lot of ideas, and a few 'special' constructs. 
+  
+  * The use of the ';' termination for statements, and skipping for expressions was an interesting choice which I learned to work with.
+  
+  * THe slow linking *is* annoying. Ten seconds or so doesn't seem much, but once your used ot almost instant run cycles it's surprisingly
+  frustrating, Couple that with no intereactive prompts, so fast compile/run is key to your development process, and this becomes
+  seriously annoyinh. I hope tjat there's progress in this area.
+  
+In the end, I would definitely consider Rust as a strong contender for many software projects, particularly weighing against C, C++, Golang,
+Java or C#. Given a free hand I'd certainly advocate it's use. It's not perfect, and the long term support of the project is a definite 
+concern, but definitely worth considering. I look forwrd to playing with the rust web frameworks, and some other features in the new year.
+  

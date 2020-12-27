@@ -12,18 +12,14 @@ pub fn run() {
     let start = SystemTime::now();
 
     // Let's do this...
-
-    // Example
-    crack(5764801, 17807724);
-
-    // Full
-    crack(data().0, data().1);
+    let key = crack(data().0, data().1);
+    println!("The door/card encryption key is {}", fmt_bright(&key));
 
     let timed = SystemTime::now().duration_since(start).unwrap();
     print_duration(timed);
 }
 
-fn crack(card: u64, door: u64) {
+fn crack(card: u64, door: u64) -> u64 {
     // The card/door keys are found by transforming 7.
     let card_lp = crack_transform(7, card);
     assert_eq!(card, transform(7, card_lp));
@@ -31,12 +27,8 @@ fn crack(card: u64, door: u64) {
     let door_lp = crack_transform(7, door);
     assert_eq!(door, transform(7, door_lp));
 
-
-    println!("Found card/door loops: {} and {}", card_lp, door_lp);
     // The encryption key is found by either transforming the others key.
-    println!("Card generates encryption key: {}", transform(door, card_lp));
-    println!("Door generates encryption key: {}", transform(card, door_lp));
-
+    transform(door, card_lp)
 }
 
 fn crack_transform(subject: u64, target: u64) -> usize {
@@ -64,5 +56,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_all() {}
+    fn test_small() {
+        assert_eq!(14_897_079, crack(5_764_801, 17_807_724));
+    }
+
+    #[test]
+    fn test_all() {
+        assert_eq!(181800, crack(data().0, data().1));
+    }
 }
